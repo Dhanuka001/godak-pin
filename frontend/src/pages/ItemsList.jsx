@@ -7,7 +7,7 @@ import api from '../utils/api';
 
 const ItemsList = () => {
   const location = useLocation();
-  const initialState = location.state || { q: '', district: '', category: '' };
+  const initialState = { q: '', district: '', city: '', category: '', ...(location.state || {}) };
   const [filters, setFilters] = useState(initialState);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ const ItemsList = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {items.map((item) => (
-                <ItemCard key={item._id} item={item} />
+                <ItemCard key={item.slug || item._id} item={item} />
               ))}
             </div>
           )}

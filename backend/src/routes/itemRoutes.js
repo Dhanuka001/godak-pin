@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const Item = require('../models/Item');
 
@@ -7,7 +8,7 @@ const router = express.Router();
 // Get items with optional filters
 router.get('/', async (req, res, next) => {
   try {
-    const { q, district, category } = req.query;
+    const { q, district, category, city } = req.query;
     const query = {};
 
     if (q) {
@@ -19,6 +20,9 @@ router.get('/', async (req, res, next) => {
     if (category) {
       query.category = category;
     }
+    if (city) {
+      query.city = city;
+    }
 
     const items = await Item.find(query).sort({ createdAt: -1 }).lean();
     return res.json(items);
@@ -27,10 +31,15 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Get single item
-router.get('/:id', async (req, res, next) => {
+const findItemByParam = (param, lean = false) => {
+  const query = mongoose.Types.ObjectId.isValid(param) ? { _id: param } : { slug: param };
+  return lean ? Item.findOne(query).lean() : Item.findOne(query);
+};
+
+// Get single item (by slug or id)
+router.get('/:slugOrId', async (req, res, next) => {
   try {
-    const item = await Item.findById(req.params.id).lean();
+    const item = await findItemByParam(req.params.slugOrId, true);
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
@@ -81,9 +90,9 @@ router.post('/', auth, async (req, res, next) => {
 });
 
 // Request item
-router.post('/:id/request', auth, async (req, res, next) => {
+router.post('/:slugOrId/request', auth, async (req, res, next) => {
   try {
-    const item = await Item.findById(req.params.id);
+    const item = await findItemByParam(req.params.slugOrId, false);
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }

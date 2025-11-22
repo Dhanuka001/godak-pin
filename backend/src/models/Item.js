@@ -24,6 +24,7 @@ const itemSchema = new mongoose.Schema(
         isPrimary: { type: Boolean, default: false },
       },
     ],
+    slug: { type: String, unique: true, sparse: true, index: true },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     ownerName: { type: String },
     ownerDistrict: { type: String },
@@ -33,5 +34,28 @@ const itemSchema = new mongoose.Schema(
 );
 
 itemSchema.index({ title: 'text', description: 'text', category: 'text' });
+
+const slugify = (text) =>
+  text
+    .toString()
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+
+itemSchema.pre('save', function buildSlug(next) {
+  if (!this.isModified('title') && !this.isModified('district') && !this.isModified('city') && this.slug) {
+    return next();
+  }
+
+  const base = [this.title, this.city, this.district].filter(Boolean).join(' ');
+  const baseSlug = slugify(base) || 'item';
+  const uniqueSuffix = (this._id || new mongoose.Types.ObjectId()).toString().slice(-6);
+  this.slug = `${baseSlug}-${uniqueSuffix}`;
+
+  return next();
+});
 
 module.exports = mongoose.model('Item', itemSchema);

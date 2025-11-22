@@ -1,16 +1,25 @@
-const districts = ['Colombo', 'Gampaha', 'Galle', 'Kandy', 'Kurunegala'];
+import { districtNames, getCitiesForDistrict } from '../utils/locationData';
+
 const categories = ['Education', 'Baby Items', 'Electronics', 'Furniture', 'Clothing'];
 
 const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
-  const handleChange = (field) => (e) => onChange({ ...values, [field]: e.target.value });
+  const handleChange = (field) => (e) => {
+    if (field === 'district') {
+      onChange({ ...values, district: e.target.value, city: '' });
+    } else {
+      onChange({ ...values, [field]: e.target.value });
+    }
+  };
+
+  const cityOptions = getCitiesForDistrict(values.district);
 
   if (layout === 'sidebar') {
     return (
       <form onSubmit={onSubmit} className="card p-4 space-y-3">
-        <h4 className="text-lg font-semibold text-slate-800">පෙරහන්</h4>
+        <h4 className="text-lg font-semibold text-slate-800">පෙරහන් / Filters</h4>
         <input
           type="text"
-          placeholder="භාණ්ඩ සොයන්න…"
+          placeholder="භාණ්ඩ සොයන්න… / Search items"
           value={values.q || ''}
           onChange={handleChange('q')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -20,19 +29,33 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           onChange={handleChange('district')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">දිශාව</option>
-          {districts.map((d) => (
+          <option value="">දිස්ත්‍රික්කය / District</option>
+          {districtNames.map((d) => (
             <option key={d} value={d}>
               {d}
             </option>
           ))}
         </select>
         <select
+          value={values.city || ''}
+          onChange={handleChange('city')}
+          className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          disabled={!values.district}
+        >
+          <option value="">{values.district ? 'නගරය / City' : 'Select district first'}</option>
+          {values.district &&
+            cityOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+        </select>
+        <select
           value={values.category || ''}
           onChange={handleChange('category')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">ප්‍රවර්ගය</option>
+          <option value="">ප්‍රවර්ගය / Category</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -54,7 +77,7 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
       <div className="md:col-span-2">
         <input
           type="text"
-          placeholder="භාණ්ඩ සොයන්න…"
+          placeholder="භාණ්ඩ සොයන්න… / Search items"
           value={values.q || ''}
           onChange={handleChange('q')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -66,8 +89,8 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           onChange={handleChange('district')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">දිශාව</option>
-          {districts.map((d) => (
+          <option value="">දිස්ත්‍රික්කය / District</option>
+          {districtNames.map((d) => (
             <option key={d} value={d}>
               {d}
             </option>
@@ -76,11 +99,27 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
       </div>
       <div>
         <select
+          value={values.city || ''}
+          onChange={handleChange('city')}
+          className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+          disabled={!values.district}
+        >
+          <option value="">{values.district ? 'නගරය / City' : 'Select district first'}</option>
+          {values.district &&
+            cityOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+        </select>
+      </div>
+      <div>
+        <select
           value={values.category || ''}
           onChange={handleChange('category')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">ප්‍රවර්ගය</option>
+          <option value="">ප්‍රවර්ගය / Category</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}

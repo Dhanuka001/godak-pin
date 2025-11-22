@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuthContext } from '../context/AuthContext';
+import { districtNames } from '../utils/locationData';
+import CitySelect from '../components/CitySelect';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -11,12 +13,20 @@ const Register = () => {
     confirm: '',
     mobile: '',
     district: '',
+    city: '',
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuthContext();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'district') {
+      setForm({ ...form, district: value, city: '' });
+      return;
+    }
+    setForm({ ...form, [name]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +42,7 @@ const Register = () => {
         password: form.password,
         mobile: form.mobile,
         district: form.district,
+        city: form.city,
       });
       login(res.data);
       navigate('/dashboard');
@@ -106,15 +117,31 @@ const Register = () => {
             </div>
             <div>
               <label className="text-sm text-slate-700">District</label>
-              <input
+              <select
                 name="district"
-                type="text"
                 value={form.district}
                 onChange={handleChange}
                 className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                 required
-              />
+              >
+                <option value="">දිස්ත්‍රික්කය / District</option>
+                {districtNames.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+          <div>
+            <label className="text-sm text-slate-700">Nearest City</label>
+            <CitySelect
+              district={form.district}
+              value={form.city}
+              required
+              onChange={(city) => setForm((prev) => ({ ...prev, city }))}
+              placeholder="Select or search your city"
+            />
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
           <button type="submit" className="btn-primary w-full">

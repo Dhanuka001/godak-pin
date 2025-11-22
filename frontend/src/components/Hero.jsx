@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import heroImg from '../assets/godak-pin-web-hero.png';
+import { districtNames } from '../utils/locationData';
 
-const districts = ['Colombo', 'Gampaha', 'Galle', 'Kandy', 'Kurunegala'];
 const categories = ['Education', 'Baby Items', 'Electronics', 'Furniture', 'Clothing'];
 
 const Hero = ({ onSearch }) => {
@@ -84,7 +84,7 @@ const Hero = ({ onSearch }) => {
               onChange={(e) => setDistrict(e.target.value)}
             >
               <option value="">දිශාව</option>
-              {districts.map((d) => (
+              {districtNames.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>

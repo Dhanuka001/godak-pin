@@ -5,7 +5,7 @@ import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
 import { useAuthContext } from '../context/AuthContext';
 
 const ItemDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -15,7 +15,7 @@ const ItemDetail = () => {
   const fetchItem = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/items/${id}`);
+      const res = await api.get(`/items/${slug}`);
       setItem(res.data);
     } catch (err) {
       setItem(null);
@@ -27,7 +27,7 @@ const ItemDetail = () => {
   useEffect(() => {
     fetchItem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [slug]);
 
   const handleRequest = async () => {
     if (!user) {
@@ -35,7 +35,7 @@ const ItemDetail = () => {
       return;
     }
     try {
-      await api.post(`/items/${id}/request`);
+      await api.post(`/items/${slug}/request`);
       setMessage('ඉල්ලීම සටහන් විය (Request recorded).');
     } catch (err) {
       setMessage(err.response?.data?.message || 'කණගාටුයි, දෝෂයකි.');

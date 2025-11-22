@@ -3,8 +3,9 @@ import api from '../utils/api';
 import { useAuthContext } from '../context/AuthContext';
 import ItemCard from '../components/ItemCard';
 import SkeletonItemCard from '../components/SkeletonItemCard';
+import { districtNames } from '../utils/locationData';
+import CitySelect from '../components/CitySelect';
 
-const districts = ['Colombo', 'Gampaha', 'Galle', 'Kandy', 'Kurunegala', 'Galle', 'Matara', 'Jaffna'];
 const categories = ['Furniture', 'Education', 'Clothing', 'Kitchen', 'Electronics', 'Kids & Baby', 'Sports', 'Gardening'];
 const conditions = ['Like new', 'Used - good', 'Used - fair'];
 
@@ -89,7 +90,14 @@ const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleItemChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleItemChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'district') {
+      setForm({ ...form, district: value, city: '' });
+      return;
+    }
+    setForm({ ...form, [name]: value });
+  };
 
   const handleImages = (e) => {
     const files = Array.from(e.target.files || []);
@@ -153,7 +161,14 @@ const Dashboard = () => {
     }
   };
 
-  const handleProfileChange = (e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'district') {
+      setProfileForm({ ...profileForm, district: value, city: '' });
+      return;
+    }
+    setProfileForm({ ...profileForm, [name]: value });
+  };
 
   const submitProfile = async (e) => {
     e.preventDefault();
@@ -250,7 +265,7 @@ const Dashboard = () => {
                   required
                 >
                   <option value="">Select district</option>
-                  {districts.map((d) => (
+                  {districtNames.map((d) => (
                     <option key={d} value={d}>
                       {d}
                     </option>
@@ -261,11 +276,12 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <label className="text-sm text-slate-700">City</label>
-                <input
-                  name="city"
+                <CitySelect
+                  district={profileForm.district}
                   value={profileForm.city}
-                  onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                  name="profileCity"
+                  onChange={(city) => setProfileForm((prev) => ({ ...prev, city }))}
+                  placeholder="Select or search your city"
                 />
               </div>
               <div>
@@ -392,7 +408,7 @@ const Dashboard = () => {
                       required
                     >
                       <option value="">Select district</option>
-                      {districts.map((d) => (
+                      {districtNames.map((d) => (
                         <option key={d} value={d}>
                           {d}
                         </option>
@@ -401,12 +417,13 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <label className="text-sm text-slate-700">City</label>
-                    <input
-                      name="city"
+                    <CitySelect
+                      district={form.district}
                       value={form.city}
-                      onChange={handleItemChange}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      name="itemCity"
                       required
+                      onChange={(city) => setForm((prev) => ({ ...prev, city }))}
+                      placeholder="Select or search your city"
                     />
                   </div>
                 </div>

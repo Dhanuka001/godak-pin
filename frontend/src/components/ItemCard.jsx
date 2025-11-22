@@ -46,7 +46,7 @@ const ItemCard = ({ item }) => {
         <div className="flex justify-between items-center pt-2">
           <div className="text-[11px] text-slate-500 whitespace-nowrap">{formatTimeAgo()}</div>
           <Link
-            to={`/items/${item._id}`}
+            to={`/items/${item.slug || item._id}`}
             className="inline-flex items-center justify-center rounded-lg border border-primary text-primary px-3 py-2 text-xs font-semibold transition hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary-dark focus:ring-offset-2 whitespace-nowrap"
           >
             වැඩි විස්තර / Details
