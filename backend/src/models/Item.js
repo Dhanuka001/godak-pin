@@ -18,6 +18,12 @@ const itemSchema = new mongoose.Schema(
     city: { type: String, required: true },
     condition: { type: String, required: true },
     imageUrl: { type: String, default: '/images/placeholder.jpg' },
+    images: [
+      {
+        url: { type: String },
+        isPrimary: { type: Boolean, default: false },
+      },
+    ],
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     ownerName: { type: String },
     ownerDistrict: { type: String },

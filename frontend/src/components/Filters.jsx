@@ -20,7 +20,7 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           onChange={handleChange('district')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">දිසා</option>
+          <option value="">දිශාව</option>
           {districts.map((d) => (
             <option key={d} value={d}>
               {d}
@@ -66,7 +66,7 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           onChange={handleChange('district')}
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <option value="">දිසා</option>
+          <option value="">දිශාව</option>
           {districts.map((d) => (
             <option key={d} value={d}>
               {d}

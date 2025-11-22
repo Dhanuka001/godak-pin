@@ -43,11 +43,22 @@ router.get('/:id', async (req, res, next) => {
 // Create item (protected)
 router.post('/', auth, async (req, res, next) => {
   try {
-    const { title, description, category, district, city, condition, imageUrl } = req.body;
+    const { title, description, category, district, city, condition, imageUrl, images, primaryImageIndex } = req.body;
 
     if (!title || !description || !category || !district || !city || !condition) {
       return res.status(400).json({ message: 'All fields are required' });
     }
+
+    const normalizedImages =
+      Array.isArray(images) && images.length
+        ? images.map((url, idx) => ({ url, isPrimary: primaryImageIndex === idx }))
+        : [];
+
+    const primaryImage =
+      normalizedImages.find((img) => img.isPrimary)?.url ||
+      normalizedImages[0]?.url ||
+      imageUrl ||
+      '/images/placeholder.jpg';
 
     const item = await Item.create({
       title,
@@ -56,7 +67,8 @@ router.post('/', auth, async (req, res, next) => {
       district,
       city,
       condition,
-      imageUrl: imageUrl || '/images/placeholder.jpg',
+      imageUrl: primaryImage,
+      images: normalizedImages.length ? normalizedImages : undefined,
       owner: req.user._id,
       ownerName: req.user.name,
       ownerDistrict: req.user.district,

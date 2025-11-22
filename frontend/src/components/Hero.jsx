@@ -40,7 +40,7 @@ const Hero = ({ onSearch }) => {
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/15 text-white px-4 py-2 text-sm font-semibold">
-                No buying/selling, only giving
+                No buying-selling, only giving
               </span>
             </div>
           </div>
@@ -83,7 +83,7 @@ const Hero = ({ onSearch }) => {
               value={district}
               onChange={(e) => setDistrict(e.target.value)}
             >
-              <option value="">දිසා</option>
+              <option value="">දිශාව</option>
               {districts.map((d) => (
                 <option key={d} value={d}>
                   {d}

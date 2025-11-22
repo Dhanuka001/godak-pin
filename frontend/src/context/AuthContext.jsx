@@ -22,6 +22,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('gp_token', payload.token);
   };
 
+  const setProfile = (nextUser) => {
+    setUser(nextUser);
+    localStorage.setItem('gp_user', JSON.stringify(nextUser));
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -29,7 +34,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('gp_token');
   };
 
-  return <AuthContext.Provider value={{ user, token, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, setProfile }}>{children}</AuthContext.Provider>
+  );
 };
 
 export const useAuthContext = () => useContext(AuthContext);

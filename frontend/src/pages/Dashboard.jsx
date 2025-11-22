@@ -4,8 +4,30 @@ import { useAuthContext } from '../context/AuthContext';
 import ItemCard from '../components/ItemCard';
 import SkeletonItemCard from '../components/SkeletonItemCard';
 
+const districts = ['Colombo', 'Gampaha', 'Galle', 'Kandy', 'Kurunegala', 'Galle', 'Matara', 'Jaffna'];
+const categories = ['Furniture', 'Education', 'Clothing', 'Kitchen', 'Electronics', 'Kids & Baby', 'Sports', 'Gardening'];
+const conditions = ['Like new', 'Used - good', 'Used - fair'];
+
 const Dashboard = () => {
-  const { user } = useAuthContext();
+  const { user, setProfile: setUserProfile } = useAuthContext();
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    mobile: user?.mobile || '',
+    district: user?.district || '',
+    city: user?.city || '',
+    contactNote: user?.contactNote || '',
+  });
+  const [profile, setProfile] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    mobile: user?.mobile || '',
+    district: user?.district || '',
+    city: user?.city || '',
+    contactNote: user?.contactNote || '',
+  });
+  const [editingProfile, setEditingProfile] = useState(false);
+
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -13,12 +35,40 @@ const Dashboard = () => {
     condition: '',
     district: '',
     city: '',
-    imageUrl: '',
+    images: [],
+    primaryImageIndex: 0,
   });
+  const [showItemForm, setShowItemForm] = useState(false);
   const [myItems, setMyItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUserProfile(res.data.user);
+      setProfile({
+        name: res.data.user.name || '',
+        email: res.data.user.email || '',
+        mobile: res.data.user.mobile || '',
+        district: res.data.user.district || '',
+        city: res.data.user.city || '',
+        contactNote: res.data.user.contactNote || '',
+      });
+      setProfileForm({
+        name: res.data.user.name || '',
+        email: res.data.user.email || '',
+        mobile: res.data.user.mobile || '',
+        district: res.data.user.district || '',
+        city: res.data.user.city || '',
+        contactNote: res.data.user.contactNote || '',
+      });
+    } catch (err) {
+      // ignore
+    }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -34,20 +84,43 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    fetchProfile();
     fetchItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleItemChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setForm((prev) => ({ ...prev, imageUrl: reader.result }));
-    };
-    reader.readAsDataURL(file);
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const readers = files.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        })
+    );
+    Promise.all(readers).then((images) => {
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...images],
+        primaryImageIndex: prev.images.length ? prev.primaryImageIndex : 0,
+      }));
+    });
+  };
+
+  const setPrimaryImage = (idx) => {
+    setForm((prev) => ({ ...prev, primaryImageIndex: idx }));
+  };
+
+  const removeImage = (idx) => {
+    setForm((prev) => {
+      const nextImages = prev.images.filter((_, i) => i !== idx);
+      const nextPrimary = prev.primaryImageIndex >= nextImages.length ? 0 : prev.primaryImageIndex;
+      return { ...prev, images: nextImages, primaryImageIndex: nextPrimary };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -55,9 +128,23 @@ const Dashboard = () => {
     setMessage('');
     setSaving(true);
     try {
-      await api.post('/items', form);
+      await api.post('/items', {
+        ...form,
+        images: form.images,
+        primaryImageIndex: form.primaryImageIndex,
+      });
       setMessage('භාණ්ඩය සාර්තකව එකතු විය.');
-      setForm({ title: '', category: '', description: '', condition: '', district: '', city: '', imageUrl: '' });
+      setForm({
+        title: '',
+        category: '',
+        description: '',
+        condition: '',
+        district: '',
+        city: '',
+        images: [],
+        primaryImageIndex: 0,
+      });
+      setShowItemForm(false);
       fetchItems();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Could not save item');
@@ -66,116 +153,149 @@ const Dashboard = () => {
     }
   };
 
+  const handleProfileChange = (e) => setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
+
+  const submitProfile = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    try {
+      const res = await api.put('/auth/me', profileForm);
+      setUserProfile(res.data.user);
+      setProfile(res.data.user);
+      setProfileForm({
+        name: res.data.user.name || '',
+        email: res.data.user.email || '',
+        mobile: res.data.user.mobile || '',
+        district: res.data.user.district || '',
+        city: res.data.user.city || '',
+        contactNote: res.data.user.contactNote || '',
+      });
+      setEditingProfile(false);
+    } catch (err) {
+      // ignore for now
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   return (
-    <div className="container-fixed py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div className="card p-6 space-y-4">
-        <h2 className="text-xl font-semibold">නව භාණ්ඩයක් දාන්න</h2>
-        <div className="text-sm text-slate-500">Add new item to share</div>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm text-slate-700">Title</label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">මගේ ගිණුම</h2>
+            <div className="text-sm text-slate-500">Profile & contact details</div>
+          </div>
+          <button
+            className="btn-secondary text-sm px-4 py-2"
+            onClick={() => setEditingProfile((v) => !v)}
+          >
+            {editingProfile ? 'Close' : 'Edit profile'}
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="text-sm text-slate-500">Name</div>
+            <div className="text-lg font-semibold text-slate-900">{profile.name}</div>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="text-sm text-slate-500">Mobile</div>
+            <div className="text-lg font-semibold text-slate-900">{profile.mobile}</div>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="text-sm text-slate-500">ස්ථානය</div>
+            <div className="text-lg font-semibold text-slate-900">
+              {profile.district} {profile.city ? `• ${profile.city}` : ''}
             </div>
-            <div>
-              <label className="text-sm text-slate-700">Category</label>
-              <input
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          </div>
+        </div>
+        {profile.contactNote && (
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="text-sm text-slate-500">Contact note</div>
+            <div className="text-sm text-slate-700">{profile.contactNote}</div>
+          </div>
+        )}
+
+        {editingProfile && (
+          <form onSubmit={submitProfile} className="grid md:grid-cols-2 gap-4 pt-4">
+            <div className="space-y-3">
               <div>
-                <label className="text-sm text-slate-700">Condition</label>
+                <label className="text-sm text-slate-700">Name</label>
                 <input
-                  name="condition"
-                  value={form.condition}
-                  onChange={handleChange}
+                  name="name"
+                  value={profileForm.name}
+                  onChange={handleProfileChange}
                   className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </div>
+              <div>
+                <label className="text-sm text-slate-700">Mobile</label>
+                <input
+                  name="mobile"
+                  value={profileForm.mobile}
+                  onChange={handleProfileChange}
+                  className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-700">District</label>
+                <select
+                  name="district"
+                  value={profileForm.district}
+                  onChange={handleProfileChange}
+                  className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                >
+                  <option value="">Select district</option>
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="space-y-3">
               <div>
                 <label className="text-sm text-slate-700">City</label>
                 <input
                   name="city"
-                  value={form.city}
-                  onChange={handleChange}
+                  value={profileForm.city}
+                  onChange={handleProfileChange}
                   className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm text-slate-700">District</label>
-                <input
-                  name="district"
-                  value={form.district}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
                 />
               </div>
               <div>
-                <label className="text-sm text-slate-700">Description</label>
+                <label className="text-sm text-slate-700">Contact note</label>
                 <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
+                  name="contactNote"
+                  value={profileForm.contactNote}
+                  onChange={handleProfileChange}
                   className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary h-24"
-                  required
                 />
               </div>
+              <button type="submit" className="btn-primary w-full" disabled={profileSaving}>
+                {profileSaving ? 'Saving...' : 'Update profile'}
+              </button>
             </div>
-            <div>
-              <label className="text-sm text-slate-700">Image (optional)</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                className="w-full rounded-lg border border-slate-200 px-4 py-2"
-              />
-              <div className="text-xs text-slate-500 mt-1">Preview only; stored as simple data URL for MVP.</div>
-            </div>
-            <button type="submit" className="btn-primary w-full" disabled={saving}>
-              <span className="btn-label">
-                <span className="si">නව භාණ්ඩයක් දාන්න</span>
-                <span className="en">{saving ? 'Saving...' : 'Add item'}</span>
-              </span>
-            </button>
-            {message && <div className="text-sm text-primary">{message}</div>}
-          </div>
-          <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-200 space-y-3">
-            <div className="text-sm text-slate-700">Preview</div>
-            {form.imageUrl ? (
-              <img src={form.imageUrl} alt="Preview" className="rounded-lg border border-slate-200" />
-            ) : (
-              <div className="h-48 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
-                No image selected
-              </div>
-            )}
-            <div className="text-xs text-slate-500">
-              භාණ්ඩය සාර්තකව එකතු විය – shown after saving successfully.
-            </div>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
 
-      <div className="space-y-4">
+      <div className="card p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">මගේ භාණ්ඩ</h2>
-          <div className="text-sm text-slate-500">Items you posted</div>
+          <div>
+            <h2 className="text-xl font-semibold">මගේ භාණ්ඩ</h2>
+            <div className="text-sm text-slate-500">Items you posted</div>
+          </div>
+          <button className="btn-secondary text-sm px-4 py-2" onClick={() => setShowItemForm((v) => !v)}>
+            {showItemForm ? 'Close form' : 'නව භාණ්ඩයක් දාන්න'}
+          </button>
         </div>
+
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, idx) => (
@@ -195,6 +315,166 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {showItemForm && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowItemForm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl p-6 overflow-auto max-h-[90vh]">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-semibold">නව භාණ්ඩයක් දාන්න</h3>
+                <p className="text-sm text-slate-500">Fill details and set a primary image</p>
+              </div>
+              <button
+                className="text-slate-500 hover:text-primary text-lg"
+                onClick={() => setShowItemForm(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm text-slate-700">Title</label>
+                    <input
+                      name="title"
+                      value={form.title}
+                      onChange={handleItemChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-700">Category</label>
+                    <select
+                      name="category"
+                      value={form.category}
+                      onChange={handleItemChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-sm text-slate-700">Condition</label>
+                    <select
+                      name="condition"
+                      value={form.condition}
+                      onChange={handleItemChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select condition</option>
+                      {conditions.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-700">District</label>
+                    <select
+                      name="district"
+                      value={form.district}
+                      onChange={handleItemChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select district</option>
+                      {districts.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-700">City</label>
+                    <input
+                      name="city"
+                      value={form.city}
+                      onChange={handleItemChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={form.description}
+                    onChange={handleItemChange}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary h-24"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-700">Images (multiple)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImages}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2"
+                  />
+                  <div className="text-xs text-slate-500 mt-1">Select multiple files; choose primary image below.</div>
+                </div>
+                <button type="submit" className="btn-primary w-full" disabled={saving}>
+                  <span className="btn-label">
+                    <span className="si">නව භාණ්ඩයක් දාන්න</span>
+                    <span className="en">{saving ? 'Saving...' : 'Add item'}</span>
+                  </span>
+                </button>
+                {message && <div className="text-sm text-primary">{message}</div>}
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-200 space-y-3">
+                <div className="text-sm text-slate-700">Preview & primary image</div>
+                {form.images.length === 0 ? (
+                  <div className="h-48 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
+                    No images selected
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {form.images.map((img, idx) => (
+                      <div key={idx} className="relative border border-slate-200 rounded-lg overflow-hidden">
+                        <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-32 object-cover" />
+                        <div className="absolute top-2 left-2 flex items-center gap-1">
+                          <input
+                            type="radio"
+                            name="primaryImage"
+                            checked={form.primaryImageIndex === idx}
+                            onChange={() => setPrimaryImage(idx)}
+                          />
+                          <span className="text-xs bg-white/80 px-2 py-1 rounded">Primary</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 bg-white/90 text-red-500 rounded-full w-7 h-7"
+                          onClick={() => removeImage(idx)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

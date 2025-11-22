@@ -57,7 +57,7 @@ const Footer = () => {
         </div>
         <div className="space-y-3">
           <div className="text-sm text-slate-300">
-            No buying/selling. Only giving with kindness. Report issues: hello@godakpin.lk
+            No buying-selling. Only giving with kindness. Report issues: hello@godakpin.lk
           </div>
         </div>
       </div>

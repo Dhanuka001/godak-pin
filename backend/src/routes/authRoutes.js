@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ const generateToken = (id) =>
 // Register new user
 router.post('/register', async (req, res, next) => {
   try {
-    const { name, email, password, mobile, district } = req.body;
+    const { name, email, password, mobile, district, city, contactNote } = req.body;
 
     if (!name || !email || !password || !mobile || !district) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -23,7 +24,7 @@ router.post('/register', async (req, res, next) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashed, mobile, district });
+    const user = await User.create({ name, email, password: hashed, mobile, district, city, contactNote });
 
     const token = generateToken(user._id);
     return res.status(201).json({ user: user.toSafeObject(), token });
@@ -49,6 +50,31 @@ router.post('/login', async (req, res, next) => {
 
     const token = generateToken(user._id);
     return res.json({ user: user.toSafeObject(), token });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Get profile
+router.get('/me', auth, async (req, res, next) => {
+  try {
+    return res.json({ user: req.user.toSafeObject() });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Update profile
+router.put('/me', auth, async (req, res, next) => {
+  try {
+    const { name, mobile, district, city, contactNote } = req.body;
+    if (name) req.user.name = name;
+    if (mobile) req.user.mobile = mobile;
+    if (district) req.user.district = district;
+    if (city !== undefined) req.user.city = city;
+    if (contactNote !== undefined) req.user.contactNote = contactNote;
+    await req.user.save();
+    return res.json({ user: req.user.toSafeObject() });
   } catch (err) {
     return next(err);
   }

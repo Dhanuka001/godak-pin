@@ -41,7 +41,7 @@ const Home = () => {
             onClick={() => navigate('/items')}
             className="text-primary hover:text-primary-dark font-semibold"
           >
-            සියල්ල බලන්න
+            සියල්ල බලන්න →
           </button>
         </div>
         {loading ? (
@@ -56,7 +56,7 @@ const Home = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {items.map((item) => (
+            {items.slice(0, 12).map((item) => (
               <ItemCard key={item._id} item={item} />
             ))}
           </div>
