@@ -35,7 +35,7 @@ const ItemsList = () => {
   };
 
   return (
-    <div className="container-fixed py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-4 md:hidden">
         <Filters values={filters} onChange={setFilters} onSubmit={onSubmit} layout="bar" />
       </div>
@@ -46,7 +46,7 @@ const ItemsList = () => {
         <div>
           <h2 className="text-xl font-semibold mb-4">භාණ්ඩ</h2>
           {loading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <SkeletonItemCard key={idx} />
               ))}
@@ -56,7 +56,7 @@ const ItemsList = () => {
               මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න.
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {items.map((item) => (
                 <ItemCard key={item._id} item={item} />
               ))}

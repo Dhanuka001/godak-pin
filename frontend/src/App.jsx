@@ -10,6 +10,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import { useAuthContext } from './context/AuthContext';
 import NoticeStrip from './components/NoticeStrip';
+import Footer from './components/Footer';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuthContext();
@@ -41,6 +42,7 @@ const App = () => {
           }
         />
       </Routes>
+      <Footer />
     </div>
   );
 };
