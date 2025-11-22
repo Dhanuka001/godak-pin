@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
@@ -12,7 +12,8 @@ const ItemDetail = () => {
   const navigate = useNavigate();
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [localStatus, setLocalStatus] = useState('available');
-  const [statusMessage, setStatusMessage] = useState('');
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
 
   const contact = useMemo(() => {
     if (!item?.owner) return null;
@@ -44,18 +45,23 @@ const ItemDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
+
   const isOwner = user && item?.owner && (item.owner._id === user._id || item.owner === user._id);
 
   const handleStatusChange = async () => {
     if (!isOwner) return;
     setUpdatingStatus(true);
-    setStatusMessage('');
     try {
       await api.put(`/items/${slug}/status`, { status: localStatus });
       setItem((prev) => (prev ? { ...prev, status: localStatus } : prev));
-      setStatusMessage('Status updated');
+      showToast('Status updated', 'success');
     } catch (err) {
-      setStatusMessage(err.response?.data?.message || 'Could not update status');
+      showToast(err.response?.data?.message || 'Could not update status', 'error');
     } finally {
       setUpdatingStatus(false);
     }
@@ -66,6 +72,12 @@ const ItemDetail = () => {
     const digits = contact.mobile.replace(/\\D/g, '');
     return `https://wa.me/${digits}`;
   }, [contact]);
+
+  const showToast = (text, tone = 'info') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ text, tone });
+    toastTimer.current = setTimeout(() => setToast(null), 2400);
+  };
 
   const statusValue = item?.status || localStatus || 'available';
   const statusLabel = {
@@ -81,6 +93,13 @@ const ItemDetail = () => {
       ? 'bg-amber-50 text-amber-700 border-amber-100'
       : 'bg-blue-50 text-blue-700 border-blue-100';
 
+  const toastTone =
+    toast?.tone === 'success'
+      ? 'bg-emerald-600 text-white'
+      : toast?.tone === 'error'
+      ? 'bg-red-600 text-white'
+      : 'bg-slate-900 text-white';
+
   if (loading) return <ItemDetailSkeleton />;
 
   if (!item) {
@@ -92,12 +111,20 @@ const ItemDetail = () => {
   }
 
   return (
-    <div className="container-fixed py-8 space-y-4">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-2 font-semibold text-sm text-primary hover:text-primary-dark"
-      >
+    <>
+      {toast && (
+        <div className="fixed bottom-24 left-4 right-4 md:right-6 md:left-auto z-40 transition duration-300 ease-out">
+          <div className={`rounded-xl px-4 py-3 shadow-2xl border border-white/10 ${toastTone} animate-toast-pop`}>
+            <div className="text-sm font-semibold">{toast.text}</div>
+          </div>
+        </div>
+      )}
+      <div className="container-fixed py-8 space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 font-semibold text-sm text-primary hover:text-primary-dark"
+        >
         <span aria-hidden>←</span>
         <span>Back</span>
       </button>
@@ -107,7 +134,7 @@ const ItemDetail = () => {
           <img
             src={item.imageUrl || 'https://via.placeholder.com/600x400.png?text=GodakPin.lk'}
             alt={item.title}
-            className="w-full h-full object-cover"
+            className="w-full h-[320px] md:h-[420px] object-cover"
           />
         </div>
         <div className="space-y-4">
@@ -176,14 +203,14 @@ const ItemDetail = () => {
                   </button>
                 </div>
               )}
-            {statusMessage && <div className="text-xs text-primary">{statusMessage}</div>}
             <div className="text-xs text-amber-600">
               ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
             </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

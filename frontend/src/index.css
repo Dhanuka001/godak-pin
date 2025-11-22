@@ -93,3 +93,18 @@ body {
 .animate-slideDown {
   animation: slideDown 0.25s ease-out;
 }
+
+@keyframes toast-pop {
+  0% {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-toast-pop {
+  animation: toast-pop 0.25s ease-out;
+}

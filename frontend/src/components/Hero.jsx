@@ -67,7 +67,7 @@ const Hero = ({ onSearch }) => {
 
         <form
           onSubmit={submit}
-          className="mt-8 bg-white rounded-2xl shadow-card px-4 py-4 md:px-6 md:py-5 max-w-5xl mx-auto border border-white/40"
+        className="mt-8 bg-white/30 backdrop-blur-md rounded-2xl shadow-card px-4 py-4 md:px-6 md:py-5 max-w-5xl mx-auto border border-white/50"
         >
           <div className="grid md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-center">
             <input
