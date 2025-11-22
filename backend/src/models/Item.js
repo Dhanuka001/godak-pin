@@ -24,6 +24,12 @@ const itemSchema = new mongoose.Schema(
         isPrimary: { type: Boolean, default: false },
       },
     ],
+    status: {
+      type: String,
+      enum: ['available', 'reserved', 'given'],
+      default: 'available',
+      index: true,
+    },
     slug: { type: String, unique: true, sparse: true, index: true },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     ownerName: { type: String },

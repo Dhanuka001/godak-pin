@@ -74,9 +74,9 @@ const ItemsList = () => {
           <Filters values={filters} onChange={setFilters} onSubmit={onSubmit} layout="sidebar" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-4">භාණ්ඩ</h2>
+          <h2 className="text-xl font-semibold mb-4 hidden md:block">භාණ්ඩ</h2>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <SkeletonItemCard key={idx} />
               ))}
@@ -86,7 +86,7 @@ const ItemsList = () => {
               මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
               {items.map((item) => (
                 <ItemCard key={item.slug || item._id} item={item} />
               ))}

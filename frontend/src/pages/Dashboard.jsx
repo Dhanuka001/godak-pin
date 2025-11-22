@@ -325,7 +325,7 @@ const Dashboard = () => {
         </div>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 3 }).map((_, idx) => (
               <SkeletonItemCard key={idx} />
             ))}
@@ -336,7 +336,7 @@ const Dashboard = () => {
             <div className="text-sm text-slate-500">No items yet</div>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {myItems.map((item) => (
               <ItemCard key={item._id} item={item} />
             ))}

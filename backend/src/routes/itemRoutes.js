@@ -5,6 +5,11 @@ const Item = require('../models/Item');
 
 const router = express.Router();
 
+const findItemByParam = (param) => {
+  const query = mongoose.Types.ObjectId.isValid(param) ? { _id: param } : { slug: param };
+  return Item.findOne(query);
+};
+
 // Get items with optional filters
 router.get('/', async (req, res, next) => {
   try {
@@ -31,15 +36,13 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-const findItemByParam = (param, lean = false) => {
-  const query = mongoose.Types.ObjectId.isValid(param) ? { _id: param } : { slug: param };
-  return lean ? Item.findOne(query).lean() : Item.findOne(query);
-};
-
 // Get single item (by slug or id)
 router.get('/:slugOrId', async (req, res, next) => {
   try {
-    const item = await findItemByParam(req.params.slugOrId, true);
+    const query = mongoose.Types.ObjectId.isValid(req.params.slugOrId)
+      ? { _id: req.params.slugOrId }
+      : { slug: req.params.slugOrId };
+    const item = await Item.findOne(query).populate('owner', 'name email mobile district city contactNote').lean();
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
@@ -76,6 +79,7 @@ router.post('/', auth, async (req, res, next) => {
       district,
       city,
       condition,
+      status: 'available',
       imageUrl: primaryImage,
       images: normalizedImages.length ? normalizedImages : undefined,
       owner: req.user._id,
@@ -92,7 +96,7 @@ router.post('/', auth, async (req, res, next) => {
 // Request item
 router.post('/:slugOrId/request', auth, async (req, res, next) => {
   try {
-    const item = await findItemByParam(req.params.slugOrId, false);
+    const item = await findItemByParam(req.params.slugOrId);
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
@@ -110,6 +114,30 @@ router.post('/:slugOrId/request', auth, async (req, res, next) => {
     await item.save();
 
     return res.json({ message: 'Request recorded' });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Update status (owner only)
+router.put('/:slugOrId/status', auth, async (req, res, next) => {
+  try {
+    const item = await findItemByParam(req.params.slugOrId);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    if (item.owner?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const { status } = req.body;
+    const allowed = ['available', 'reserved', 'given'];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    item.status = status;
+    await item.save();
+    return res.json({ status: item.status });
   } catch (err) {
     return next(err);
   }

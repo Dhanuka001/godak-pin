@@ -24,7 +24,7 @@ const IconUser = () => (
 
 const items = [
   { to: '/', label: 'Home', icon: IconHome },
-  { to: '/items', label: 'Shop', icon: IconBag },
+  { to: '/items', label: 'Items', icon: IconBag },
   { to: '/dashboard', label: 'Account', icon: IconUser },
 ];
 
