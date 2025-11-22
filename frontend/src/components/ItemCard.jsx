@@ -15,45 +15,48 @@ const ItemCard = ({ item }) => {
     return `${Math.max(minutes, 1)} min ago`;
   };
 
+  const descriptionSnippet =
+    typeof item.description === 'string' && item.description.length
+      ? `${item.description.slice(0, 110)}${item.description.length > 110 ? '…' : ''}`
+      : '';
+
   return (
-    <div className="card overflow-hidden hover:shadow-lg transition">
-      <div className="h-48 bg-slate-100">
+    <Link
+      to={`/items/${item.slug || item._id}`}
+      className="card overflow-hidden hover:shadow-lg transition block group"
+    >
+      <div className="relative h-48 bg-slate-100">
         <img
           src={item.imageUrl || '/placeholder.jpg'}
           alt={item.title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover group-hover:scale-[1.02] transition"
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x200.png?text=GodakPin.lk';
           }}
         />
+        <div className="absolute bottom-0 left-0 p-3 bg-gradient-to-t from-black/50 via-black/10 to-transparent text-white">
+          <span className="text-[11px] bg-white/20 px-2.5 py-1 rounded-full backdrop-blur">{item.condition}</span>
+        </div>
       </div>
       <div className="p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] bg-primary/10 text-primary px-2.5 py-1 rounded-full whitespace-nowrap">
-            මුලින් එන කෙනාට
-          </span>
-          <span className="text-[11px] text-slate-500 whitespace-nowrap">{item.condition}</span>
-        </div>
-        <h3 className="text-sm font-semibold text-slate-900 truncate">{item.title}</h3>
-        <div className="text-xs text-slate-600 flex flex-wrap gap-2 items-center">
-          <span className="bg-slate-100 px-2.5 py-1 rounded-full whitespace-nowrap flex items-center gap-1">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 gap-3">
+          <span className="whitespace-nowrap">{formatTimeAgo()}</span>
+          <span className="flex items-center gap-1 text-primary font-semibold">
             <span aria-hidden>📍</span>
-            <span className="whitespace-nowrap">
-              {item.district} • {item.city}
-            </span>
+            <span className="truncate max-w-[120px] sm:max-w-[160px]">{item.city || 'City'}</span>
           </span>
         </div>
-        <div className="flex justify-between items-center pt-2">
-          <div className="text-[11px] text-slate-500 whitespace-nowrap">{formatTimeAgo()}</div>
-          <Link
-            to={`/items/${item.slug || item._id}`}
-            className="inline-flex items-center justify-center rounded-lg border border-primary text-primary px-3 py-2 text-xs font-semibold transition hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary-dark focus:ring-offset-2 whitespace-nowrap"
-          >
-            වැඩි විස්තර / Details
-          </Link>
+        <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 min-h-[2.5rem]">{item.title}</h3>
+        {descriptionSnippet && (
+          <p className="text-xs text-slate-600 leading-relaxed line-clamp-2 min-h-[2.5rem]">{descriptionSnippet}</p>
+        )}
+        <div className="flex justify-end pt-1">
+          <span className="inline-flex items-center gap-2 bg-white text-primary px-3 py-2 rounded-lg text-xs font-semibold border border-primary/40 shadow-sm transition hover:bg-primary hover:text-white">
+            <span>විස්තර බලන්න / Details</span>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

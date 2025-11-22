@@ -34,6 +34,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('gp_token');
   };
 
+  useEffect(() => {
+    const handleLogoutEvent = () => logout();
+    window.addEventListener('gp:logout', handleLogoutEvent);
+    return () => window.removeEventListener('gp:logout', handleLogoutEvent);
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, token, login, logout, setProfile }}>{children}</AuthContext.Provider>
   );

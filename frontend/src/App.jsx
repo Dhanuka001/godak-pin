@@ -11,6 +11,7 @@ import Contact from './pages/Contact';
 import { useAuthContext } from './context/AuthContext';
 import NoticeStrip from './components/NoticeStrip';
 import Footer from './components/Footer';
+import MobileBottomNav from './components/MobileBottomNav';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuthContext();
@@ -42,6 +43,7 @@ const App = () => {
           }
         />
       </Routes>
+      <MobileBottomNav />
       <Footer />
     </div>
   );

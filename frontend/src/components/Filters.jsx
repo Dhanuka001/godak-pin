@@ -1,6 +1,5 @@
 import { districtNames, getCitiesForDistrict } from '../utils/locationData';
-
-const categories = ['Education', 'Baby Items', 'Electronics', 'Furniture', 'Clothing'];
+import { categoriesForFilters } from '../utils/categoryData';
 
 const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
   const handleChange = (field) => (e) => {
@@ -56,9 +55,9 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">ප්‍රවර්ගය / Category</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categoriesForFilters.map((c) => (
+            <option key={c.nameEn} value={c.nameEn}>
+              {c.nameSi} / {c.nameEn}
             </option>
           ))}
         </select>
@@ -120,9 +119,9 @@ const Filters = ({ values, onChange, onSubmit, layout = 'bar' }) => {
           className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">ප්‍රවර්ගය / Category</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {categoriesForFilters.map((c) => (
+            <option key={c.nameEn} value={c.nameEn}>
+              {c.nameSi} / {c.nameEn}
             </option>
           ))}
         </select>

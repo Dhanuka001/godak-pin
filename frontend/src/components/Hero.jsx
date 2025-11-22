@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import heroImg from '../assets/godak-pin-web-hero.png';
 import { districtNames } from '../utils/locationData';
-
-const categories = ['Education', 'Baby Items', 'Electronics', 'Furniture', 'Clothing'];
+import { categoriesForFilters } from '../utils/categoryData';
 
 const Hero = ({ onSearch }) => {
   const [q, setQ] = useState('');
@@ -96,9 +95,9 @@ const Hero = ({ onSearch }) => {
               onChange={(e) => setCategory(e.target.value)}
             >
               <option value="">ප්‍රවර්ගය</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {categoriesForFilters.map((c) => (
+                <option key={c.nameEn} value={c.nameEn}>
+                  {c.nameEn}
                 </option>
               ))}
             </select>

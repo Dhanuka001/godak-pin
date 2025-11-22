@@ -72,3 +72,24 @@ body {
   font-weight: 600;
   font-size: 0.875rem;
 }
+
+@media (min-width: 768px) {
+  .marquee {
+    animation-duration: 28s;
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.25s ease-out;
+}

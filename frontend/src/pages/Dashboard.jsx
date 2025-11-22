@@ -5,8 +5,7 @@ import ItemCard from '../components/ItemCard';
 import SkeletonItemCard from '../components/SkeletonItemCard';
 import { districtNames } from '../utils/locationData';
 import CitySelect from '../components/CitySelect';
-
-const categories = ['Furniture', 'Education', 'Clothing', 'Kitchen', 'Electronics', 'Kids & Baby', 'Sports', 'Gardening'];
+import { categories } from '../utils/categoryData';
 const conditions = ['Like new', 'Used - good', 'Used - fair'];
 
 const Dashboard = () => {
@@ -201,12 +200,25 @@ const Dashboard = () => {
             <h2 className="text-xl font-semibold">මගේ ගිණුම</h2>
             <div className="text-sm text-slate-500">Profile & contact details</div>
           </div>
-          <button
-            className="btn-secondary text-sm px-4 py-2"
-            onClick={() => setEditingProfile((v) => !v)}
-          >
-            {editingProfile ? 'Close' : 'Edit profile'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              className="btn-secondary text-sm px-4 py-2"
+              onClick={() => setEditingProfile((v) => !v)}
+            >
+              {editingProfile ? 'Close' : 'Edit profile'}
+            </button>
+            <button
+              type="button"
+              className="text-sm text-red-600 hover:text-red-500"
+              onClick={() => {
+                // logout is only exposed inside account as requested
+                const event = new CustomEvent('gp:logout');
+                window.dispatchEvent(event);
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4">
@@ -373,8 +385,8 @@ const Dashboard = () => {
                     >
                       <option value="">Select category</option>
                       {categories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
+                        <option key={c.nameEn} value={c.nameEn}>
+                          {c.nameEn}
                         </option>
                       ))}
                     </select>

@@ -1,24 +1,21 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 
 const navLinkClass = ({ isActive }) =>
   `text-sm font-medium transition hover:text-primary-dark ${isActive ? 'text-primary' : 'text-slate-700'}`;
 
 const Navbar = () => {
-  const { user, logout } = useAuthContext();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  const { user } = useAuthContext();
 
   return (
-    <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-100">
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
       <div className="container-fixed py-3 flex items-center justify-between">
         <Link to="/" className="text-xl font-semibold text-primary">
           GodakPin.lk
         </Link>
+        <div className="md:hidden text-xs text-slate-600 font-medium">
+          {user ? `Hello, ${user.name}` : 'Welcome'}
+        </div>
         <nav className="hidden md:flex items-center gap-6">
           <NavLink to="/" className={navLinkClass}>
             මුල් පිටුව
@@ -33,7 +30,7 @@ const Navbar = () => {
             සම්බන්ධ වෙනවා
           </NavLink>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
               <span className="text-sm text-slate-700">හෙලෝ, {user.name}</span>
@@ -43,9 +40,6 @@ const Navbar = () => {
                   <span className="en">My page</span>
                 </span>
               </Link>
-              <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-primary">
-                Logout
-              </button>
             </>
           ) : (
             <>
