@@ -1,11 +1,21 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
+import { useChatContext } from '../context/ChatContext';
+
+const IconChat = () => (
+  <svg aria-hidden viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.7">
+    <path d="M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v5A3.5 3.5 0 0 1 16.5 15H9l-4 4v-4.5Z" />
+    <path d="M8.5 11h7" />
+    <path d="M8.5 7.75H15" />
+  </svg>
+);
 
 const navLinkClass = ({ isActive }) =>
   `text-sm font-medium transition hover:text-primary-dark ${isActive ? 'text-primary' : 'text-slate-700'}`;
 
 const Navbar = () => {
   const { user } = useAuthContext();
+  const { unreadCount, toggleChat } = useChatContext();
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
@@ -36,6 +46,21 @@ const Navbar = () => {
           )}
         </nav>
         <div className="hidden md:flex items-center gap-3">
+          {user && (
+            <button
+              type="button"
+              onClick={toggleChat}
+              className="relative inline-flex items-center justify-center rounded-full border border-slate-200 bg-white h-10 w-10 text-slate-600 hover:border-primary hover:text-primary"
+              aria-label="Open chat"
+            >
+              <IconChat />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
           {user ? (
             <>
               <span className="text-sm text-slate-700">හෙලෝ, {user.name}</span>

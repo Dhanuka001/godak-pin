@@ -13,6 +13,7 @@ import NoticeStrip from './components/NoticeStrip';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import Admin from './pages/Admin';
+import ChatWidget from './components/ChatWidget';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuthContext();
@@ -34,6 +35,7 @@ const App = () => {
     <div className="min-h-screen bg-white text-slate-900">
       <Navbar />
       <NoticeStrip />
+      <ChatWidget />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/items" element={<ItemsList />} />

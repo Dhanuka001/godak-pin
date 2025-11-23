@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
 import { useAuthContext } from '../context/AuthContext';
+import { useChatContext } from '../context/ChatContext';
 
 const ItemDetail = () => {
   const { slug } = useParams();
@@ -18,6 +19,15 @@ const ItemDetail = () => {
   const [reportReason, setReportReason] = useState('');
   const [reportMessage, setReportMessage] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const { openChatWith } = useChatContext();
+
+  const showToast = (text, tone = 'info') => {
+    setToast({ text, tone });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  };
 
   const contact = useMemo(() => {
     if (!item?.owner) return null;
@@ -71,12 +81,6 @@ const ItemDetail = () => {
     }
   };
 
-  const chatLink = useMemo(() => {
-    if (!contact?.mobile) return null;
-    const digits = contact.mobile.replace(/\\D/g, '');
-    return `https://wa.me/${digits}`;
-  }, [contact]);
-
   const statusValue = item?.status || localStatus || 'available';
   const statusLabel = {
     available: 'Available / ලබා දීමට',
@@ -98,6 +102,39 @@ const ItemDetail = () => {
       ? 'bg-red-600 text-white'
       : 'bg-slate-900 text-white';
 
+  const shareUrl = useMemo(() => (typeof window !== 'undefined' ? window.location.href : ''), []);
+  const sharePlatforms = useMemo(() => {
+    const url = encodeURIComponent(shareUrl);
+    const text = encodeURIComponent(item?.title || 'GodakPin.lk item');
+    return [
+      {
+        label: 'WhatsApp',
+        href: `https://wa.me/?text=${text}%20${url}`,
+        iconSrc: 'https://cdn-icons-png.flaticon.com/512/3670/3670051.png',
+        iconAlt: 'WhatsApp logo',
+      },
+      {
+        label: 'Facebook',
+        href: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        iconSrc: 'https://cdn-icons-png.flaticon.com/512/5968/5968764.png',
+        iconAlt: 'Facebook logo',
+      },
+      {
+        label: 'Twitter',
+        href: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+        iconSrc: 'https://cdn-icons-png.flaticon.com/512/5968/5968958.png',
+        iconAlt: 'Twitter logo',
+      },
+      {
+        label: 'Telegram',
+        href: `https://t.me/share/url?url=${url}&text=${text}`,
+        iconSrc: 'https://cdn-icons-png.flaticon.com/512/2111/2111646.png',
+        iconAlt: 'Telegram logo',
+      },
+    ];
+  }, [item?.title, shareUrl]);
+  const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
   const handleReport = async () => {
     if (!user) {
       navigate('/login');
@@ -117,11 +154,11 @@ const ItemDetail = () => {
     }
   };
 
-  const handleShare = async () => {
+  const handleNativeShare = async () => {
     const shareData = {
       title: item?.title || 'GodakPin.lk item',
       text: item?.description?.slice(0, 120) || '',
-      url: window.location.href,
+      url: shareUrl,
     };
     try {
       if (navigator.share) {
@@ -133,6 +170,30 @@ const ItemDetail = () => {
       }
     } catch (err) {
       // ignore cancel
+    }
+  };
+
+  const handleStartChat = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    const conversationId = item?.owner?._id || `donor-${slug}`;
+    openChatWith({
+      id: conversationId,
+      name: contact?.name || 'Donor',
+    });
+    showToast('Chat opened', 'success');
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedLink(true);
+      showToast('Link copied', 'success');
+      setTimeout(() => setCopiedLink(false), 1500);
+    } catch (err) {
+      showToast('Could not copy link', 'error');
     }
   };
 
@@ -161,42 +222,42 @@ const ItemDetail = () => {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 font-semibold text-sm text-primary hover:text-primary-dark"
         >
-        <span aria-hidden>←</span>
-        <span>Back</span>
-      </button>
+          <span aria-hidden>←</span>
+          <span>Back</span>
+        </button>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="card overflow-hidden">
-          <img
-            src={item.imageUrl || 'https://via.placeholder.com/600x400.png?text=GodakPin.lk'}
-            alt={item.title}
-            className="w-full h-[320px] md:h-[420px] object-cover"
-          />
-        </div>
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-2">
-            <h1 className="text-2xl font-semibold">{item.title}</h1>
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
-              {statusLabel}
-            </span>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="card overflow-hidden">
+            <img
+              src={item.imageUrl || 'https://via.placeholder.com/600x400.png?text=GodakPin.lk'}
+              alt={item.title}
+              className="w-full h-[320px] md:h-[420px] object-cover"
+            />
           </div>
-          <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-            <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
-            <span className="bg-slate-100 px-3 py-1 rounded-full">
-              {item.district} • {item.city}
-            </span>
-            <span className="bg-slate-100 px-3 py-1 rounded-full">{item.condition}</span>
-          </div>
-          <p className="text-slate-700 leading-relaxed">{item.description}</p>
-          <div className="card p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-slate-600">
-                දායකයා: <strong>{contact?.name || item.ownerName || 'සාමාජික'}</strong>{' '}
-                ({contact?.district || item.ownerDistrict || item.district})
-              </div>
-              {contact?.city && <div className="text-xs text-slate-500">{contact.city}</div>}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-2xl font-semibold">{item.title}</h1>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
+                {statusLabel}
+              </span>
             </div>
-            {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
+            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
+              <span className="bg-slate-100 px-3 py-1 rounded-full">
+                {item.district} • {item.city}
+              </span>
+              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.condition}</span>
+            </div>
+            <p className="text-slate-700 leading-relaxed">{item.description}</p>
+            <div className="card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  දායකයා: <strong>{contact?.name || item.ownerName || 'සාමාජික'}</strong>{' '}
+                  ({contact?.district || item.ownerDistrict || item.district})
+                </div>
+                {contact?.city && <div className="text-xs text-slate-500">{contact.city}</div>}
+              </div>
+              {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
             <div className="grid grid-cols-2 gap-3">
               <a
                 href={contact?.mobile ? `tel:${contact.mobile}` : undefined}
@@ -205,30 +266,24 @@ const ItemDetail = () => {
               >
                 Call donor
               </a>
-              <a
-                href={chatLink || undefined}
-                className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed text-center"
-                onClick={(e) => {
-                  if (!chatLink) e.preventDefault();
-                }}
-              >
+              <button type="button" onClick={handleStartChat} className="btn-secondary text-center">
                 Chat with donor
-              </a>
+              </button>
             </div>
-            {isOwner && (
-              <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="text-xs uppercase tracking-wide text-slate-500">Status</label>
-                  <select
-                    value={localStatus}
-                    onChange={(e) => setLocalStatus(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  >
-                    <option value="available">Available / ලබා දීමට</option>
-                    <option value="reserved">Reserved / රඳවා ඇත</option>
-                    <option value="given">Given / ලබා දී ඇත</option>
-                  </select>
-                </div>
+              {isOwner && (
+                <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="text-xs uppercase tracking-wide text-slate-500">Status</label>
+                    <select
+                      value={localStatus}
+                      onChange={(e) => setLocalStatus(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    >
+                      <option value="available">Available / ලබා දීමට</option>
+                      <option value="reserved">Reserved / රඳවා ඇත</option>
+                      <option value="given">Given / ලබා දී ඇත</option>
+                    </select>
+                  </div>
                   <button
                     type="button"
                     onClick={handleStatusChange}
@@ -239,29 +294,98 @@ const ItemDetail = () => {
                   </button>
                 </div>
               )}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary-dark"
-              >
-                <span aria-hidden>🔗</span> Share ad
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowReport(true)}
-                className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-500"
-              >
-                <span aria-hidden>⚠️</span> Report this item
-              </button>
-            </div>
-            <div className="text-xs text-amber-600">
-              ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowShare(true)}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition"
+                >
+                  <span aria-hidden>🔗</span>
+                  <span>Share this item</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReport(true)}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-500"
+                >
+                  <span aria-hidden>⚠️</span> Report this item
+                </button>
+              </div>
+              <div className="text-xs text-amber-600">
+                ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
+              </div>
             </div>
           </div>
         </div>
       </div>
-      </div>
+      {showShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowShare(false)} />
+          <div className="relative w-full max-w-2xl">
+            <div
+              aria-hidden
+              className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-primary/40 via-amber-400/40 to-primary/60 blur-2xl opacity-60"
+            />
+            <div className="relative bg-white rounded-3xl shadow-2xl p-6 space-y-5 animate-toast-pop border border-white/60">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-semibold text-slate-900">Spread the word</h3>
+                  <p className="text-sm text-slate-600">
+                    Send this ad to a friend or a community group and help it reach the right hands.
+                  </p>
+                </div>
+                <button
+                  className="text-slate-400 hover:text-primary transition"
+                  onClick={() => setShowShare(false)}
+                  aria-label="Close share options"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {sharePlatforms.map((platform) => (
+                    <a
+                      key={platform.label}
+                      href={platform.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex flex-col items-center gap-2 rounded-2xl bg-white p-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5"
+                    >
+                      <img src={platform.iconSrc} alt={platform.iconAlt} className="h-11 w-11 object-contain" />
+                      <span className="text-center leading-tight">{platform.label}</span>
+                    </a>
+                  ))}
+                </div>
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3 shadow-inner">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Share link</div>
+                  <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 text-sm text-slate-700 break-words">
+                    {shareUrl}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary text-white px-3 py-2 text-sm font-semibold shadow hover:bg-primary-dark"
+                    >
+                      {copiedLink ? 'Copied!' : 'Copy link'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNativeShare}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!canNativeShare}
+                    >
+                      <span aria-hidden>📲</span>
+                      {canNativeShare ? 'Quick share' : 'Share on device'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowReport(false)} />
