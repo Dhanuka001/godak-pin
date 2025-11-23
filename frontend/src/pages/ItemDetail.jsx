@@ -14,6 +14,10 @@ const ItemDetail = () => {
   const [localStatus, setLocalStatus] = useState('available');
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportMessage, setReportMessage] = useState('');
+  const [reporting, setReporting] = useState(false);
 
   const contact = useMemo(() => {
     if (!item?.owner) return null;
@@ -73,12 +77,6 @@ const ItemDetail = () => {
     return `https://wa.me/${digits}`;
   }, [contact]);
 
-  const showToast = (text, tone = 'info') => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ text, tone });
-    toastTimer.current = setTimeout(() => setToast(null), 2400);
-  };
-
   const statusValue = item?.status || localStatus || 'available';
   const statusLabel = {
     available: 'Available / ලබා දීමට',
@@ -99,6 +97,44 @@ const ItemDetail = () => {
       : toast?.tone === 'error'
       ? 'bg-red-600 text-white'
       : 'bg-slate-900 text-white';
+
+  const handleReport = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setReporting(true);
+    try {
+      await api.post(`/items/${slug}/report`, { reason: reportReason, message: reportMessage });
+      showToast('Report sent. Thank you.', 'success');
+      setShowReport(false);
+      setReportReason('');
+      setReportMessage('');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not send report', 'error');
+    } finally {
+      setReporting(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: item?.title || 'GodakPin.lk item',
+      text: item?.description?.slice(0, 120) || '',
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        showToast('Shared', 'success');
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        showToast('Link copied', 'success');
+      }
+    } catch (err) {
+      // ignore cancel
+    }
+  };
 
   if (loading) return <ItemDetailSkeleton />;
 
@@ -203,6 +239,22 @@ const ItemDetail = () => {
                   </button>
                 </div>
               )}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary-dark"
+              >
+                <span aria-hidden>🔗</span> Share ad
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReport(true)}
+                className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-500"
+              >
+                <span aria-hidden>⚠️</span> Report this item
+              </button>
+            </div>
             <div className="text-xs text-amber-600">
               ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
             </div>
@@ -210,6 +262,49 @@ const ItemDetail = () => {
         </div>
       </div>
       </div>
+      {showReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowReport(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-5 space-y-3 animate-toast-pop">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Report this item</h3>
+              <button className="text-slate-500 hover:text-primary" onClick={() => setShowReport(false)}>
+                ✕
+              </button>
+            </div>
+            <div>
+              <label className="text-sm text-slate-700">Reason</label>
+              <select
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary mt-1"
+              >
+                <option value="">Select a reason</option>
+                <option value="inappropriate">Inappropriate content</option>
+                <option value="spam">Spam / duplicates</option>
+                <option value="safety">Safety concern</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-slate-700">More details (optional)</label>
+              <textarea
+                value={reportMessage}
+                onChange={(e) => setReportMessage(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary h-24 mt-1"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleReport}
+              disabled={!reportReason || reporting}
+              className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {reporting ? 'Sending...' : 'Submit report'}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

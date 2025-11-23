@@ -29,6 +29,11 @@ const Navbar = () => {
           <NavLink to="/contact" className={navLinkClass}>
             සම්බන්ධ වෙනවා
           </NavLink>
+          {user?.role === 'admin' && (
+            <NavLink to="/admin" className={navLinkClass}>
+              Admin
+            </NavLink>
+          )}
         </nav>
         <div className="hidden md:flex items-center gap-3">
           {user ? (

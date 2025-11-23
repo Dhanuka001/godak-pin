@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const Item = require('../models/Item');
+const Report = require('../models/Report');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const findItemByParam = (param) => {
 // Get items with optional filters
 router.get('/', async (req, res, next) => {
   try {
-    const { q, district, category, city } = req.query;
+    const { q, district, category, city, limit } = req.query;
     const query = {};
 
     if (q) {
@@ -29,7 +30,11 @@ router.get('/', async (req, res, next) => {
       query.city = city;
     }
 
-    const items = await Item.find(query).sort({ createdAt: -1 }).lean();
+    const findQuery = Item.find(query).sort({ createdAt: -1 });
+    if (limit) {
+      findQuery.limit(Math.min(parseInt(limit, 10) || 0, 50));
+    }
+    const items = await findQuery.lean();
     return res.json(items);
   } catch (err) {
     return next(err);
@@ -138,6 +143,30 @@ router.put('/:slugOrId/status', auth, async (req, res, next) => {
     item.status = status;
     await item.save();
     return res.json({ status: item.status });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Report item
+router.post('/:slugOrId/report', auth, async (req, res, next) => {
+  try {
+    const item = await findItemByParam(req.params.slugOrId);
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+
+    const { reason, message } = req.body;
+    if (!reason) return res.status(400).json({ message: 'Reason is required' });
+
+    await Report.create({
+      item: item._id,
+      reporter: req.user._id,
+      reporterName: req.user.name,
+      reporterEmail: req.user.email,
+      reason,
+      message,
+    });
+
+    return res.status(201).json({ message: 'Report submitted' });
   } catch (err) {
     return next(err);
   }

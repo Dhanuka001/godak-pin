@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/authRoutes');
 const itemRoutes = require('./src/routes/itemRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 const { notFound, errorHandler } = require('./src/middleware/errorHandlers');
 
 const app = express();
@@ -19,6 +20,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

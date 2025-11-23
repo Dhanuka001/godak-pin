@@ -12,12 +12,20 @@ import { useAuthContext } from './context/AuthContext';
 import NoticeStrip from './components/NoticeStrip';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
+import Admin from './pages/Admin';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuthContext();
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user } = useAuthContext();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/" replace />;
   return children;
 };
 
@@ -40,6 +48,14 @@ const App = () => {
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
           }
         />
       </Routes>

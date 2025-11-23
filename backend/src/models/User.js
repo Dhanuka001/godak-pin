@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     district: { type: String, required: true },
     city: { type: String, default: '' },
     contactNote: { type: String, default: '' },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
   },
   { timestamps: true }
 );
