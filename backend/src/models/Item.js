@@ -35,6 +35,7 @@ const itemSchema = new mongoose.Schema(
     ownerName: { type: String },
     ownerDistrict: { type: String },
     requests: { type: [requestSchema], default: [] },
+    boostedUntil: { type: Date, default: null, index: true },
   },
   { timestamps: true }
 );

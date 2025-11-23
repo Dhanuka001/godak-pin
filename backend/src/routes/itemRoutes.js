@@ -30,12 +30,17 @@ router.get('/', async (req, res, next) => {
       query.city = city;
     }
 
-    const findQuery = Item.find(query).sort({ createdAt: -1 });
+    const now = new Date();
+    const findQuery = Item.find(query).sort({ boostedUntil: -1, createdAt: -1 });
     if (limit) {
       findQuery.limit(Math.min(parseInt(limit, 10) || 0, 50));
     }
     const items = await findQuery.lean();
-    return res.json(items);
+    const mapped = items.map((item) => ({
+      ...item,
+      isBoosted: item.boostedUntil ? new Date(item.boostedUntil) > now : false,
+    }));
+    return res.json(mapped);
   } catch (err) {
     return next(err);
   }
@@ -51,7 +56,8 @@ router.get('/:slugOrId', async (req, res, next) => {
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
-    return res.json(item);
+    const now = new Date();
+    return res.json({ ...item, isBoosted: item.boostedUntil ? new Date(item.boostedUntil) > now : false });
   } catch (err) {
     return next(err);
   }
@@ -143,6 +149,35 @@ router.put('/:slugOrId/status', auth, async (req, res, next) => {
     item.status = status;
     await item.save();
     return res.json({ status: item.status });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Boost item (owner only)
+router.post('/:slugOrId/boost', auth, async (req, res, next) => {
+  try {
+    const item = await findItemByParam(req.params.slugOrId);
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+    if (item.owner?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const hours = 24;
+    const now = new Date();
+    const currentBoost = item.boostedUntil && new Date(item.boostedUntil) > now ? new Date(item.boostedUntil) : now;
+    const boostedUntil = new Date(currentBoost.getTime() + hours * 60 * 60 * 1000);
+
+    item.boostedUntil = boostedUntil;
+    await item.save();
+
+    // TODO: verify PayHere payment server-side using their API / IPN callback.
+
+    return res.json({
+      message: 'Item boosted for 24 hours',
+      boostedUntil,
+      isBoosted: true,
+    });
   } catch (err) {
     return next(err);
   }

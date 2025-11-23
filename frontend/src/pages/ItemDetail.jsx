@@ -22,6 +22,7 @@ const ItemDetail = () => {
   const [showShare, setShowShare] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const { openChatWith } = useChatContext();
+  const [boosting, setBoosting] = useState(false);
 
   const showToast = (text, tone = 'info') => {
     setToast({ text, tone });
@@ -87,6 +88,7 @@ const ItemDetail = () => {
     reserved: 'Reserved / රඳවා ඇත',
     given: 'Given / ලබා දී ඇත',
   }[statusValue];
+  const isBoosted = item?.isBoosted || (item?.boostedUntil && new Date(item.boostedUntil).getTime() > Date.now());
 
   const statusTone =
     statusValue === 'given'
@@ -197,6 +199,27 @@ const ItemDetail = () => {
     }
   };
 
+  const handleBoost = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!isOwner) {
+      showToast('Only the owner can boost this ad', 'error');
+      return;
+    }
+    setBoosting(true);
+    try {
+      const res = await api.post(`/items/${slug}/boost`);
+      setItem((prev) => (prev ? { ...prev, boostedUntil: res.data.boostedUntil, isBoosted: true } : prev));
+      showToast('Boost activated for 24 hours', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Could not boost ad', 'error');
+    } finally {
+      setBoosting(false);
+    }
+  };
+
   if (loading) return <ItemDetailSkeleton />;
 
   if (!item) {
@@ -237,10 +260,19 @@ const ItemDetail = () => {
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-2">
               <h1 className="text-2xl font-semibold">{item.title}</h1>
-              <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
-                {statusLabel}
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
+              {statusLabel}
+            </span>
+            {isBoosted && (
+              <span
+                className="text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1"
+                style={{ border: '1px solid #f4b000', backgroundColor: '#fff6d5', color: '#7a4b00' }}
+              >
+                <span aria-hidden>★</span>
+                <span>Boosted</span>
               </span>
-            </div>
+            )}
+          </div>
             <div className="flex flex-wrap gap-2 text-sm text-slate-600">
               <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
               <span className="bg-slate-100 px-3 py-1 rounded-full">
@@ -292,6 +324,51 @@ const ItemDetail = () => {
                   >
                     {updatingStatus ? 'Saving...' : 'Update status'}
                   </button>
+                </div>
+              )}
+              {isOwner && (
+                <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-800 font-semibold text-sm">
+                    <span aria-hidden>⚡</span>
+                    <span>{isBoosted ? 'Currently boosted' : 'Need this gone fast?'}</span>
+                  </div>
+                  {!isBoosted && (
+                    <>
+                      <p className="text-sm text-amber-900">
+                        Boost your ad for 24 hours for <strong>Rs. 800.00</strong>. Move this item quickly and keep your home space free.
+                      </p>
+                      <p className="text-sm text-amber-900">
+                        මෙම අයිතමය ඉතා ඉක්මනින් ලබා දීමට අවශ්‍යද?
+                      </p>
+                    </>
+                  )}
+                  {isBoosted && (
+                    <>
+                      <p className="text-sm text-amber-900">
+                        Your ad is boosted and sitting at the top. Keep eyes on it and reply quickly to close the pickup.
+                      </p>
+                      <p className="text-sm text-amber-900">
+                        ඔබේ දැන්වීම උසස් කර ඇත.. ඉක්මනින් ප්‍රතිචාර දී අවශ්‍ය අය අමතන්න.
+                      </p>
+                    </>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {!isBoosted && (
+                      <button
+                        type="button"
+                        onClick={handleBoost}
+                        className="inline-flex items-center gap-2 rounded-lg bg-amber-500 text-white px-3 py-2 text-sm font-semibold hover:bg-amber-600 disabled:opacity-70"
+                        disabled={boosting}
+                      >
+                        {boosting ? 'Boosting…' : 'Boost for 24 hours'}
+                      </button>
+                    )}
+                    {isBoosted && item?.boostedUntil && (
+                      <span className="text-xs text-amber-800">
+                        Active until {new Date(item.boostedUntil).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-3">
