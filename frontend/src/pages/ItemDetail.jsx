@@ -103,6 +103,18 @@ const ItemDetail = () => {
       : toast?.tone === 'error'
       ? 'bg-red-600 text-white'
       : 'bg-slate-900 text-white';
+  const formatTimeAgo = () => {
+    if (!item?.createdAt) return '';
+    const now = new Date();
+    const created = new Date(item.createdAt);
+    const diffMs = now - created;
+    const minutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${Math.max(minutes, 1)} min ago`;
+  };
 
   const shareUrl = useMemo(() => (typeof window !== 'undefined' ? window.location.href : ''), []);
   const sharePlatforms = useMemo(() => {
@@ -249,7 +261,7 @@ const ItemDetail = () => {
           <span>Back</span>
         </button>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="card overflow-hidden">
             <img
               src={item.imageUrl || 'https://via.placeholder.com/600x400.png?text=GodakPin.lk'}
@@ -258,50 +270,38 @@ const ItemDetail = () => {
             />
           </div>
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-2">
-              <h1 className="text-2xl font-semibold">{item.title}</h1>
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
-              {statusLabel}
-            </span>
-            {isBoosted && (
-              <span
-                className="text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1"
-                style={{ border: '1px solid #f4b000', backgroundColor: '#fff6d5', color: '#7a4b00' }}
-              >
-                <span aria-hidden>★</span>
-                <span>Boosted</span>
-              </span>
-            )}
-          </div>
-            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
-              <span className="bg-slate-100 px-3 py-1 rounded-full">
-                {item.district} • {item.city}
-              </span>
-              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.condition}</span>
-            </div>
-            <p className="text-slate-700 leading-relaxed">{item.description}</p>
-            <div className="card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-600">
-                  දායකයා: <strong>{contact?.name || item.ownerName || 'සාමාජික'}</strong>{' '}
-                  ({contact?.district || item.ownerDistrict || item.district})
+          <div className="card p-4 space-y-4 h-full min-h-[320px] md:min-h-[420px] flex flex-col">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="text-base font-semibold text-slate-900">
+                    දායකයා: <span className="font-bold">{contact?.name || item.ownerName || 'සාමාජික'}</span>
+                  </div>
+                  {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
+                  <div>
+                    <span className=" text-primary px-3 py-1 rounded-full font-semibold inline-flex items-center gap-1">
+                      <span aria-hidden>📍</span>
+                      <span>{item.city || item.location || 'Location not provided'}</span>
+                    </span>
+                  </div>
                 </div>
-                {contact?.city && <div className="text-xs text-slate-500">{contact.city}</div>}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
+                      {statusLabel}
+                    </span>
+                    {isBoosted && (
+                      <span
+                        className="text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1"
+                        style={{ border: '1px solid #f4b000', backgroundColor: '#fff6d5', color: '#7a4b00' }}
+                      >
+                        <span aria-hidden>★</span>
+                        <span>Boosted</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500">Published {formatTimeAgo()}</div>
+                </div>
               </div>
-              {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
-            <div className="grid grid-cols-2 gap-3">
-              <a
-                href={contact?.mobile ? `tel:${contact.mobile}` : undefined}
-                className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed text-center"
-                onClick={(e) => !contact?.mobile && e.preventDefault()}
-              >
-                Call donor
-              </a>
-              <button type="button" onClick={handleStartChat} className="btn-secondary text-center">
-                Chat with donor
-              </button>
-            </div>
               {isOwner && (
                 <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
                   <div>
@@ -338,7 +338,7 @@ const ItemDetail = () => {
                         Boost your ad for 24 hours for <strong>Rs. 800.00</strong>. Move this item quickly and keep your home space free.
                       </p>
                       <p className="text-sm text-amber-900">
-                        මෙම අයිතමය ඉතා ඉක්මනින් ලබා දීමට අවශ්‍යද?
+                        මෙම අයිතමය ඉතා ඉක්මනින් ලබා දීමට අවශ්‍යද? පහලින් Boost කරන්න.
                       </p>
                     </>
                   )}
@@ -371,27 +371,54 @@ const ItemDetail = () => {
                   </div>
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowShare(true)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition"
-                >
-                  <span aria-hidden>🔗</span>
-                  <span>Share this item</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowReport(true)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-500"
-                >
-                  <span aria-hidden>⚠️</span> Report this item
-                </button>
-              </div>
-              <div className="text-xs text-amber-600">
-                ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
+              <div className="mt-auto space-y-3 pt-2">
+                <div className="grid grid-cols-2 mt-2 gap-3">
+                  <a
+                    href={contact?.mobile ? `tel:${contact.mobile}` : undefined}
+                    className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed text-center"
+                    onClick={(e) => !contact?.mobile && e.preventDefault()}
+                  >
+                    Call donor
+                  </a>
+                  <button type="button" onClick={handleStartChat} className="btn-secondary text-center">
+                    Chat with donor
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center mt-5 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowShare(true)}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition"
+                  >
+                    <span aria-hidden>🔗</span>
+                    <span>Share this item</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowReport(true)}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-500"
+                  >
+                    <span aria-hidden>⚠️</span> Report this item
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-3">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">{item.title}</h1>
+            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
+              <span className="bg-slate-100 px-3 py-1 rounded-full font-semibold text-slate-700">
+                Condition: {item.condition}
+              </span>
+            </div>
+          </div>
+          <p className="text-slate-700 leading-relaxed">{item.description}</p>
+          <div className="text-xs text-amber-600">
+            ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
           </div>
         </div>
       </div>
