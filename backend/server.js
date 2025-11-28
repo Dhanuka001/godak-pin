@@ -11,7 +11,43 @@ const { notFound, errorHandler } = require('./src/middleware/errorHandlers');
 
 const app = express();
 
-app.use(cors());
+const normalizeOrigin = (origin) => (origin ? origin.replace(/\/$/, '') : origin);
+
+const allowedOrigins = new Set(
+  [
+    ...String(process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+    process.env.APP_URL,
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ]
+    .filter(Boolean)
+    .map(normalizeOrigin)
+);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow same-origin or curl
+      const normalized = normalizeOrigin(origin);
+      if (allowedOrigins.has(normalized)) return callback(null, true);
+      const corsError = new Error(`CORS: origin ${origin} is not allowed`);
+      corsError.statusCode = 403;
+      return callback(corsError);
+    },
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+// Allow third-party popups (e.g., Google Identity) to work in browsers that enforce COOP/COEP by default.
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  return next();
+});
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));

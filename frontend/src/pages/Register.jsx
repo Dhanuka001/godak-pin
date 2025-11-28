@@ -4,6 +4,7 @@ import api from '../utils/api';
 import { useAuthContext } from '../context/AuthContext';
 import { districtNames } from '../utils/locationData';
 import CitySelect from '../components/CitySelect';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -151,6 +152,12 @@ const Register = () => {
             </span>
           </button>
         </form>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 border-t border-slate-200" />
+          <span className="text-xs text-slate-400 uppercase tracking-wide">or</span>
+          <div className="flex-1 border-t border-slate-200" />
+        </div>
+        <GoogleAuthButton onSuccess={() => navigate('/dashboard')} />
         <div className="text-center text-sm">
           දැනටමත් ගිණුමක් තියෙනවද?{' '}
           <Link to="/login" className="text-primary hover:text-primary-dark">

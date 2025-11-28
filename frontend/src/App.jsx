@@ -14,6 +14,7 @@ import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import Admin from './pages/Admin';
 import ChatWidget from './components/ChatWidget';
+import GoogleOneTap from './components/GoogleOneTap';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuthContext();
@@ -36,6 +37,7 @@ const App = () => {
       <Navbar />
       <NoticeStrip />
       <ChatWidget />
+      <GoogleOneTap />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/items" element={<ItemsList />} />

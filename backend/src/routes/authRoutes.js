@@ -3,11 +3,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { OAuth2Client } = require('google-auth-library');
 
 const router = express.Router();
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'godakpin_secret', { expiresIn: '7d' });
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const isGoogleConfigured = Boolean(googleClientId && !googleClientId.includes('your-google'));
+const googleClient = isGoogleConfigured ? new OAuth2Client(googleClientId) : null;
 
 // Register new user
 router.post('/register', async (req, res, next) => {
@@ -52,6 +57,57 @@ router.post('/login', async (req, res, next) => {
     return res.json({ user: user.toSafeObject(), token });
   } catch (err) {
     return next(err);
+  }
+});
+
+// Login/register with Google
+router.post('/google', async (req, res, next) => {
+  if (!googleClient || !isGoogleConfigured) {
+    return res.status(500).json({ message: 'Google login is not configured' });
+  }
+
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: 'Missing Google credential' });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: googleClientId,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || payload.email_verified !== true) {
+      return res.status(401).json({ message: 'Google account is not verified' });
+    }
+
+    const name = payload.name || payload.email.split('@')[0];
+    let user = await User.findOne({ email: payload.email });
+    let created = false;
+
+    if (!user) {
+      const fallbackSecret = `${payload.sub}.${process.env.JWT_SECRET || 'gp_fallback'}`;
+      const hashed = await bcrypt.hash(fallbackSecret, 10);
+
+      user = await User.create({
+        name,
+        email: payload.email,
+        password: hashed,
+        mobile: '',
+        district: '',
+        city: payload.locale || '',
+        contactNote: '',
+      });
+      created = true;
+    }
+
+    const token = generateToken(user._id);
+    return res.json({ user: user.toSafeObject(), token, created });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Google login verification failed', err);
+    return res.status(401).json({ message: 'Invalid Google token' });
   }
 });
 

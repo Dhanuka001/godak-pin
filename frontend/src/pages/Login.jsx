@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuthContext } from '../context/AuthContext';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -59,6 +60,12 @@ const Login = () => {
             </span>
           </button>
         </form>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 border-t border-slate-200" />
+          <span className="text-xs text-slate-400 uppercase tracking-wide">or</span>
+          <div className="flex-1 border-t border-slate-200" />
+        </div>
+        <GoogleAuthButton onSuccess={() => navigate('/dashboard')} />
         <div className="text-center text-sm">
           ගිණුමක් නැද්ද?{' '}
           <Link to="/register" className="text-primary hover:text-primary-dark">
