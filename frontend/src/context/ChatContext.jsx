@@ -1,240 +1,359 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAuthContext } from './AuthContext';
+import api, { apiBase } from '../utils/api';
 
 const ChatContext = createContext(null);
 
-const baseState = { conversations: [], activeId: null, isOpen: false };
-const threadKey = (conversationId) => `gp_chat_thread_${conversationId}`;
-const metaKey = (conversationId) => `gp_chat_meta_${conversationId}`;
-
-const readThread = (conversationId) => {
-  try {
-    const raw = localStorage.getItem(threadKey(conversationId));
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch (_e) {
-    return [];
-  }
+const buildConversationId = (a, b) => {
+  if (!a || !b) return null;
+  const ids = [a.toString(), b.toString()].sort();
+  return ids.join(':');
 };
 
-const writeThread = (conversationId, messages) => {
-  localStorage.setItem(threadKey(conversationId), JSON.stringify(messages));
-};
+const ChatProvider = ({ children }) => {
+  const { user, token } = useAuthContext();
+  const [conversations, setConversations] = useState([]);
+  const [activePartnerId, setActivePartnerId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [typing, setTyping] = useState({});
+  const [isReady, setIsReady] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const eventSourceRef = useRef(null);
+  const typingTimeoutRef = useRef({});
+  const activePartnerRef = useRef(null);
+  const activeConversationIdRef = useRef(null);
 
-const writeMeta = (conversationId, meta) => {
-  localStorage.setItem(metaKey(conversationId), JSON.stringify(meta));
-};
+  const resetState = useCallback(() => {
+    setConversations([]);
+    setMessages([]);
+    setActivePartnerId(null);
+    setTyping({});
+    setIsReady(false);
+    setIsLoadingConversations(false);
+    setIsLoadingMessages(false);
+    Object.values(typingTimeoutRef.current).forEach(clearTimeout);
+    typingTimeoutRef.current = {};
+  }, []);
 
-const readMeta = (conversationId) => {
-  try {
-    const raw = localStorage.getItem(metaKey(conversationId));
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (_e) {
-    return null;
-  }
-};
+  const upsertConversation = useCallback((payload) => {
+    if (!payload || !payload.conversationId) return;
+    setConversations((prev) => {
+      const existing = prev.find((conv) => conv.conversationId === payload.conversationId);
+      const basePartner =
+        payload.partner || existing?.partner || { _id: payload.conversationId, name: 'Chat' };
+      const updated = {
+        conversationId: payload.conversationId,
+        partner: basePartner,
+        lastMessage: payload.lastMessage || existing?.lastMessage || null,
+        unreadCount:
+          typeof payload.unreadCount === 'number'
+            ? payload.unreadCount
+            : existing?.unreadCount || 0,
+        listing: payload.listing ?? existing?.listing ?? null,
+        lastActivity:
+          payload.lastMessage?.timestamp || existing?.lastActivity || new Date().toISOString(),
+      };
+      const next = existing
+        ? prev.map((conv) =>
+            conv.conversationId === payload.conversationId ? updated : conv
+          )
+        : [updated, ...prev];
+      return next.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+    });
+  }, []);
 
-export const ChatProvider = ({ children }) => {
-  const { user } = useAuthContext();
-  const hydrated = useRef(false);
-  const storageKey = useMemo(() => (user ? `gp_chat_state_${user._id}` : 'gp_chat_state_guest'), [user?._id]);
-  const [state, setState] = useState(baseState);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        setState(JSON.parse(stored));
-      } catch {
-        setState(baseState);
-      }
-    } else {
-      setState(baseState);
-    }
-    hydrated.current = true;
-  }, [storageKey]);
-
-  // Bootstrap conversations from shared threads when no saved state exists (e.g., other account on same device)
-  useEffect(() => {
-    if (!hydrated.current) return;
-    if (state.conversations.length) return;
-    const discovered = [];
-    for (let i = 0; i < localStorage.length; i += 1) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('gp_chat_thread_')) {
-        const conversationId = key.replace('gp_chat_thread_', '');
-        const thread = readThread(conversationId);
-        const meta = readMeta(conversationId);
-        const messages = thread.map((m) => ({
-          id: m.id,
-          text: m.text,
-          ts: m.ts,
-          from: m.fromId && user && m.fromId === user._id ? 'me' : 'donor',
-        }));
-        const otherMessage = thread.find((m) => !user || m.fromId !== user._id);
-        const derivedName = otherMessage?.fromName || meta?.name || 'Conversation';
-        discovered.push({
-          id: conversationId,
-          name: derivedName,
-          avatar: meta?.avatar || null,
-          unread: 0,
-          messages,
-        });
-      }
-    }
-    if (discovered.length) {
-      setState((prev) => ({ ...prev, conversations: discovered, activeId: discovered[0].id || null }));
-    }
-  }, [state.conversations.length, user]);
-
-  const unreadCount = useMemo(
-    () => state.conversations.reduce((sum, convo) => sum + (convo.unread || 0), 0),
-    [state.conversations]
-  );
-
-  useEffect(() => {
-    if (!hydrated.current) return;
-    localStorage.setItem(storageKey, JSON.stringify(state));
-  }, [state, storageKey]);
-
-  useEffect(() => {
-    if (!user) {
-      setState(baseState);
+  const fetchConversations = useCallback(async () => {
+    if (!user) return;
+    setIsLoadingConversations(true);
+    setIsReady(false);
+    try {
+      const { data } = await api.get('/chat/conversations');
+      setConversations(data.conversations || []);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Unable to load conversations', err);
+    } finally {
+      setIsLoadingConversations(false);
+      setIsReady(true);
     }
   }, [user]);
 
-  const syncFromThread = (conversationId, opts = { markUnread: true }) => {
-    setState((prev) => {
-      const thread = readThread(conversationId);
-      const existing = prev.conversations.find((c) => c.id === conversationId);
-      if (!existing) {
-        const meta = readMeta(conversationId);
-        const messages = thread.map((m) => ({
-          id: m.id,
-          text: m.text,
-          ts: m.ts,
-          from: m.fromId && user && m.fromId === user._id ? 'me' : 'donor',
-        }));
-        return {
-          ...prev,
-          conversations: [
-            ...prev.conversations,
-            {
-              id: conversationId,
-              name: meta?.name || 'Conversation',
-              avatar: meta?.avatar || null,
-              unread: opts.markUnread ? messages.filter((m) => m.from === 'donor').length : 0,
-              messages,
-            },
-          ],
-        };
-      }
-      const seenIds = new Set(existing.messages.map((m) => m.id));
-      const mapped = thread
-        .filter((m) => !seenIds.has(m.id))
-        .map((m) => ({
-          id: m.id,
-          text: m.text,
-          ts: m.ts,
-          from: m.fromId && user && m.fromId === user._id ? 'me' : 'donor',
-        }));
-      if (!mapped.length) return prev;
-      const unreadIncrement =
-        opts.markUnread && !(prev.isOpen && prev.activeId === conversationId)
-          ? (existing.unread || 0) + mapped.filter((m) => m.from === 'donor').length
-          : 0;
-      const conversations = prev.conversations.map((convo) =>
-        convo.id === conversationId
-          ? {
-              ...convo,
-              unread: opts.markUnread ? unreadIncrement : 0,
-              messages: [...convo.messages, ...mapped],
-            }
-          : convo
+  const markAsRead = useCallback(async (partnerId) => {
+    if (!partnerId) return;
+    try {
+      await api.post('/chat/mark-read', { partnerId });
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.partner._id === partnerId ? { ...conv, unreadCount: 0 } : conv
+        )
       );
-      return { ...prev, conversations };
-    });
-  };
-
-  const setActiveConversation = (id) => {
-    setState((prev) => ({
-      ...prev,
-      activeId: id,
-      conversations: prev.conversations.map((convo) => (convo.id === id ? { ...convo, unread: 0 } : convo)),
-    }));
-    syncFromThread(id, { markUnread: false });
-  };
-
-  const toggleChat = () => setState((prev) => ({ ...prev, isOpen: !prev.isOpen }));
-  const closeChat = () => setState((prev) => ({ ...prev, isOpen: false }));
-
-  const openChatWith = ({ id, name, avatar }) => {
-    if (!id) return;
-    if (name || avatar) {
-      writeMeta(id, { name: name || 'Conversation', avatar: avatar || null });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to mark messages as read', err);
     }
-    setState((prev) => {
-      const exists = prev.conversations.find((c) => c.id === id);
-      const conversations = exists
-        ? prev.conversations
-        : [...prev.conversations, { id, name: name || 'Conversation', avatar: avatar || null, unread: 0, messages: [] }];
-      return {
-        ...prev,
-        isOpen: true,
-        activeId: id,
-        conversations: conversations.map((convo) => (convo.id === id ? { ...convo, unread: 0 } : convo)),
-      };
-    });
-    syncFromThread(id, { markUnread: false });
-  };
+  }, []);
 
-  const addIncomingMessage = (conversationId, text) => {
-    const ts = Date.now();
-    const entry = { id: `${conversationId}-in-${ts}`, fromId: conversationId, fromName: 'Donor', text, ts };
-    const thread = readThread(conversationId);
-    writeThread(conversationId, [...thread, entry]);
-    syncFromThread(conversationId);
-  };
+  const fetchMessages = useCallback(
+    async (partnerId) => {
+      if (!partnerId) {
+        setMessages([]);
+        return;
+      }
+      setIsLoadingMessages(true);
+      const conversationId = buildConversationId(user?._id, partnerId);
+      try {
+        const { data } = await api.get('/chat/messages', { params: { partnerId } });
+        setMessages(data.messages || []);
+        if (data.listing) {
+          upsertConversation({
+            conversationId,
+            listing: data.listing,
+          });
+        }
+        await markAsRead(partnerId);
+      } catch (err) {
+        setMessages([]);
+        // eslint-disable-next-line no-console
+        console.error('Failed to load messages', err);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    },
+    [markAsRead, upsertConversation, user?._id]
+  );
 
-  const sendMessage = (conversationId, text) => {
-    if (!text.trim()) return;
-    const ts = Date.now();
-    const entry = { id: `${conversationId}-me-${ts}`, fromId: user?._id || 'me', fromName: user?.name || 'Me', text, ts };
-    const thread = readThread(conversationId);
-    writeThread(conversationId, [...thread, entry]);
-    setState((prev) => {
-      const conversations = prev.conversations.map((convo) =>
-        convo.id === conversationId
-          ? { ...convo, messages: [...convo.messages, { id: entry.id, text: entry.text, ts: entry.ts, from: 'me' }] }
-          : convo
-      );
-      return { ...prev, conversations };
-    });
-  };
+  const selectConversation = useCallback(
+    (partnerId, opts = {}) => {
+      if (!partnerId) return;
+      const conversationId = buildConversationId(user?._id, partnerId);
+      setActivePartnerId(partnerId);
+      setTyping((prev) => ({ ...prev, [conversationId]: false }));
+      const shouldUpsert =
+        opts.partner || opts.listing || opts.lastMessage || typeof opts.unreadCount === 'number';
+      if (shouldUpsert) {
+        upsertConversation({
+          conversationId,
+          partner: opts.partner,
+          lastMessage: opts.lastMessage,
+          unreadCount: opts.unreadCount,
+          listing: opts.listing,
+        });
+      }
+    },
+    [upsertConversation, user]
+  );
+
+  const sendMessage = useCallback(
+    async (partnerId, content, listingId) => {
+      if (!partnerId || !content?.trim()) return null;
+      try {
+        const { data } = await api.post('/chat/messages', {
+          receiverId: partnerId,
+          content: content.trim(),
+          listingId: listingId || null,
+        });
+        const payload = data.message;
+        setMessages((prev) => [...prev, payload]);
+        const conversationId = buildConversationId(user?._id, partnerId);
+        setConversations((prev) => {
+          const existing = prev.find((conv) => conv.conversationId === conversationId);
+          const next = {
+            conversationId,
+            partner: existing?.partner || { _id: partnerId, name: 'Conversation' },
+            lastMessage: payload,
+            unreadCount: existing?.unreadCount || 0,
+            listing: existing?.listing || null,
+            lastActivity: payload.timestamp,
+          };
+          const merged = existing
+            ? prev.map((conv) =>
+                conv.conversationId === conversationId ? next : conv
+              )
+            : [next, ...prev];
+          return merged.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+        });
+        return payload;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Unable to send message', err);
+        return null;
+      }
+    },
+    [user]
+  );
+
+  const notifyTyping = useCallback(async (partnerId, isTyping) => {
+    if (!partnerId) return;
+    try {
+      await api.post('/chat/typing', { partnerId, isTyping });
+    } catch (_err) {
+      // ignore typing noise
+    }
+  }, []);
+
+  const activeConversation = useMemo(
+    () => conversations.find((conv) => conv.partner._id === activePartnerId) || null,
+    [conversations, activePartnerId]
+  );
 
   useEffect(() => {
-    const handler = (e) => {
-      if (!e.key || !e.key.startsWith('gp_chat_thread_')) return;
-      const conversationId = e.key.replace('gp_chat_thread_', '');
-      syncFromThread(conversationId);
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    activePartnerRef.current = activePartnerId;
+  }, [activePartnerId]);
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversation?.conversationId || null;
+  }, [activeConversation]);
+
+  const handleNewMessage = useCallback(
+    (event) => {
+      if (!event?.data) return;
+      try {
+        const payload = JSON.parse(event.data);
+        upsertConversation({
+          conversationId: payload.conversationId,
+          partner: payload.partner,
+          lastMessage: payload.message,
+          unreadCount: payload.unreadCount,
+          listing: payload.listing,
+        });
+        if (payload.conversationId === activeConversationIdRef.current) {
+          setMessages((prev) => [...prev, payload.message]);
+          void markAsRead(activePartnerRef.current);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Malformed chat event', err);
+      }
+    },
+    [markAsRead, upsertConversation]
+  );
+
+  const handleConversationUpdate = useCallback(
+    (event) => {
+      if (!event?.data) return;
+      try {
+        const payload = JSON.parse(event.data);
+        upsertConversation({
+          conversationId: payload.conversationId,
+          partner: payload.partner,
+          lastMessage: payload.lastMessage,
+          unreadCount: payload.unreadCount,
+          listing: payload.listing,
+        });
+        if (payload.conversationId === activeConversationIdRef.current) {
+          void markAsRead(activePartnerRef.current);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Malformed chat event', err);
+      }
+    },
+    [markAsRead, upsertConversation]
+  );
+
+  const handleTypingEvent = useCallback((event) => {
+    if (!event?.data) return;
+    try {
+      const payload = JSON.parse(event.data);
+      const key = payload.conversationId;
+      setTyping((prev) => ({ ...prev, [key]: Boolean(payload.isTyping) }));
+      if (payload.isTyping) {
+        if (typingTimeoutRef.current[key]) {
+          clearTimeout(typingTimeoutRef.current[key]);
+        }
+        typingTimeoutRef.current[key] = setTimeout(() => {
+          setTyping((prevState) => {
+            const next = { ...prevState };
+            delete next[key];
+            return next;
+          });
+        }, 3200);
+      } else if (typingTimeoutRef.current[key]) {
+        clearTimeout(typingTimeoutRef.current[key]);
+        delete typingTimeoutRef.current[key];
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Bad typing payload', err);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      resetState();
+      eventSourceRef.current?.close();
+      eventSourceRef.current = null;
+      return undefined;
+    }
+    fetchConversations();
+    return undefined;
+  }, [fetchConversations, resetState, user]);
+
+  useEffect(() => {
+    if (!activePartnerId) {
+      setMessages([]);
+      return undefined;
+    }
+    fetchMessages(activePartnerId);
+    return undefined;
+  }, [activePartnerId, fetchMessages]);
+
+  useEffect(() => {
+    if (!user || !token) return undefined;
+    const stream = new EventSource(`${apiBase}/chat/events?token=${token}`, {
+      withCredentials: true,
+    });
+    eventSourceRef.current = stream;
+    stream.addEventListener('chat:new_message', handleNewMessage);
+    stream.addEventListener('chat:conversation_update', handleConversationUpdate);
+    stream.addEventListener('chat:typing', handleTypingEvent);
+    stream.onerror = () => {
+      // eslint-disable-next-line no-console
+      console.warn('Chat stream disconnected, retrying...');
+    };
+    return () => {
+      stream.close();
+      eventSourceRef.current = null;
+    };
+  }, [user, token, handleNewMessage, handleConversationUpdate, handleTypingEvent]);
+
+  useEffect(() => {
+    if (!activePartnerId && conversations.length) {
+      setActivePartnerId(conversations[0].partner._id);
+    }
+  }, [activePartnerId, conversations]);
+
+  useEffect(() => () => {
+    eventSourceRef.current?.close();
+    Object.values(typingTimeoutRef.current).forEach(clearTimeout);
+  }, []);
+
+  const unreadCount = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
 
   return (
     <ChatContext.Provider
       value={{
-        ...state,
+        conversations,
+        activePartnerId,
+        activeConversation,
+        messages,
+        typing,
+        isReady,
+        isLoadingConversations,
+        isLoadingMessages,
         unreadCount,
-        setActiveConversation,
-        toggleChat,
-        closeChat,
-        openChatWith,
-        addIncomingMessage,
+        selectConversation,
         sendMessage,
+        notifyTyping,
       }}
     >
       {children}
@@ -243,3 +362,5 @@ export const ChatProvider = ({ children }) => {
 };
 
 export const useChatContext = () => useContext(ChatContext);
+
+export { ChatProvider };

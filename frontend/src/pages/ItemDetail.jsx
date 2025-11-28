@@ -22,7 +22,7 @@ const ItemDetail = () => {
   const [reporting, setReporting] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const { openChatWith } = useChatContext();
+  const { selectConversation } = useChatContext();
   const [boosting, setBoosting] = useState(false);
 
   const showToast = (text, tone = 'info') => {
@@ -205,11 +205,24 @@ const ItemDetail = () => {
       navigate('/login');
       return;
     }
-    const conversationId = item?.owner?._id || `donor-${slug}`;
-    openChatWith({
-      id: conversationId,
-      name: contact?.name || 'Donor',
-    });
+    const partnerId = item?.owner?._id || item?.owner;
+    if (!partnerId) {
+      showToast('Unable to start chat at the moment', 'error');
+      return;
+    }
+    const partnerMeta = {
+      _id: partnerId,
+      name: contact?.name || item?.ownerName || 'Donor',
+      email: item?.owner?.email || '',
+    };
+    const listingMeta = {
+      id: item?._id,
+      title: item?.title,
+      imageUrl: item?.imageUrl,
+      slug: item?.slug,
+    };
+    selectConversation(partnerId, { partner: partnerMeta, listing: listingMeta });
+    navigate('/chat');
     showToast('Chat opened', 'success');
   };
 

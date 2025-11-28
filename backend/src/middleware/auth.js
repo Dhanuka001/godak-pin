@@ -3,7 +3,9 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.replace('Bearer ', '') : null;
+  const headerToken = header.startsWith('Bearer ') ? header.replace('Bearer ', '') : null;
+  const queryToken = req.query?.token || null;
+  const token = headerToken || queryToken;
 
   if (!token) {
     return res.status(401).json({ message: 'Unauthorized' });

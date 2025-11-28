@@ -41,7 +41,8 @@ const items = [
 const MobileBottomNav = () => {
   const { user } = useAuthContext();
   const location = useLocation();
-  const { unreadCount, toggleChat } = useChatContext();
+  const { unreadCount } = useChatContext();
+  const badgeLabel = unreadCount > 99 ? '99+' : unreadCount;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 z-30">
@@ -50,21 +51,24 @@ const MobileBottomNav = () => {
           const isActive = item.to && location.pathname === item.to;
           const Icon = item.icon;
           if (item.type === 'action') {
+            const target = user ? '/chat' : '/login';
             return (
-              <button
+              <Link
                 key={item.label}
-                type="button"
-                onClick={toggleChat}
-                className={`relative py-3 flex flex-col items-center gap-1 ${unreadCount ? 'text-primary' : ''}`}
+                to={target}
+                className="relative py-3 flex flex-col items-center gap-1"
               >
                 <Icon />
                 <span className="text-[11px]">{item.label}</span>
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-7 inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {unreadCount}
+                  <span
+                    className="absolute top-1 right-6 inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+                    aria-label={`${badgeLabel} unread messages`}
+                  >
+                    {badgeLabel}
                   </span>
                 )}
-              </button>
+              </Link>
             );
           }
           if (item.to === '/dashboard' && !user) {

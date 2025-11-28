@@ -15,7 +15,8 @@ const navLinkClass = ({ isActive }) =>
 
 const Navbar = () => {
   const { user } = useAuthContext();
-  const { unreadCount, toggleChat } = useChatContext();
+  const { unreadCount } = useChatContext();
+  const badgeLabel = unreadCount > 99 ? '99+' : unreadCount;
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
@@ -46,21 +47,26 @@ const Navbar = () => {
           )}
         </nav>
         <div className="hidden md:flex items-center gap-3">
-          {user && (
-            <button
-              type="button"
-              onClick={toggleChat}
+          {user ? (
+            <Link
+              to="/chat"
               className="relative inline-flex items-center justify-center rounded-full border border-slate-200 bg-white h-10 w-10 text-slate-600 hover:border-primary hover:text-primary"
               aria-label="Open chat"
             >
               <IconChat />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {unreadCount}
-                </span>
+                <>
+                  <span className="absolute -top-1 -right-2 h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true" />
+                  <span
+                    className="absolute -top-[10px] -right-[-2px] inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white"
+                    aria-label={`${badgeLabel} unread messages`}
+                  >
+                    {badgeLabel}
+                  </span>
+                </>
               )}
-            </button>
-          )}
+            </Link>
+          ) : null}
           {user ? (
             <>
               <span className="text-sm text-slate-700">හෙලෝ, {user.name}</span>
