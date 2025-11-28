@@ -157,6 +157,9 @@ router.put('/:slugOrId/status', auth, async (req, res, next) => {
 // Boost item (owner only)
 router.post('/:slugOrId/boost', auth, async (req, res, next) => {
   try {
+    if (process.env.ALLOW_DIRECT_BOOST !== 'true') {
+      return res.status(403).json({ message: 'Boosting requires a successful payment.' });
+    }
     const item = await findItemByParam(req.params.slugOrId);
     if (!item) return res.status(404).json({ message: 'Item not found' });
     if (item.owner?.toString() !== req.user._id.toString()) {

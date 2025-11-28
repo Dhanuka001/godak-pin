@@ -37,7 +37,7 @@ const Navbar = () => {
             අප ගැන
           </NavLink>
           <NavLink to="/contact" className={navLinkClass}>
-            සම්බන්ධ වෙනවා
+            සම්බන්ධ වෙන්න
           </NavLink>
           {user?.role === 'admin' && (
             <NavLink to="/admin" className={navLinkClass}>

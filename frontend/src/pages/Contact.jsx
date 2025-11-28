@@ -1,7 +1,7 @@
 const Contact = () => (
   <div className="container-fixed py-10">
     <div className="card p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">සම්බන්ධ වෙනවා / Contact Us</h1>
+      <h1 className="text-2xl font-semibold">සම්බන්ධ වෙන්න / Contact Us</h1>
       <p className="text-slate-600">
         Tell us your ideas, report an issue, or partner with us. We usually reply within 1–2 business days.
       </p>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../utils/api';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
 import { useAuthContext } from '../context/AuthContext';
@@ -11,6 +11,7 @@ const ItemDetail = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [localStatus, setLocalStatus] = useState('available');
   const [toast, setToast] = useState(null);
@@ -59,6 +60,18 @@ const ItemDetail = () => {
     fetchItem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('boostReturn')) {
+      showToast('Thanks! We are confirming your payment. Boost will appear shortly.', 'success');
+      fetchItem();
+    }
+    if (params.get('boostCancelled')) {
+      showToast('Payment cancelled. Boost not activated.', 'error');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   useEffect(() => {
     return () => {
@@ -220,11 +233,30 @@ const ItemDetail = () => {
       showToast('Only the owner can boost this ad', 'error');
       return;
     }
+    if (!item?._id) {
+      showToast('Item not ready yet', 'error');
+      return;
+    }
     setBoosting(true);
     try {
-      const res = await api.post(`/items/${slug}/boost`);
-      setItem((prev) => (prev ? { ...prev, boostedUntil: res.data.boostedUntil, isBoosted: true } : prev));
-      showToast('Boost activated for 24 hours', 'success');
+      const res = await api.post('/payments/boost/create', { itemId: item._id });
+      const { checkoutUrl, payload } = res.data || {};
+      if (!checkoutUrl || !payload) throw new Error('Invalid payment session');
+
+      // Build a form and post to PayHere hosted checkout
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = checkoutUrl;
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value ?? '';
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      showToast('Redirecting to secure payment…', 'info');
+      form.submit();
     } catch (err) {
       showToast(err.response?.data?.message || 'Could not boost ad', 'error');
     } finally {
