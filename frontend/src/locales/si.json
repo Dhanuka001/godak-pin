@@ -1,0 +1,198 @@
+{
+  "nav": {
+    "chat": "චැට්",
+    "account": "ගිණුම",
+    "home": "මුල් පිටුව",
+    "items": "භාණ්ඩ",
+    "about": "අප ගැන",
+    "contact": "සම්බන්ධ වෙන්න",
+    "admin": "Admin",
+    "login": "ලොග් වෙන්න",
+    "signup": "ගිණුමක් තනන්න",
+    "dashboard": "මගේ ගිණුම",
+    "greeting": "හෙලෝ, {{name}}"
+  },
+  "notice": {
+    "marquee": "මෙම වෙබ් අඩවිය තුළ භාණ්ඩ විකිණීම තහනම්, භාවිතා නොකරන භාණ්ඩ නොමිලේ බෙදාගන්න."
+  },
+  "hero": {
+    "title": "ඔබ භාවිතා නොකරන, වෙන ආයෙකුට භාවිතා කළ හැකි දේවල් විශ්වාසයෙන් බෙදාගන්න.",
+    "description": "ඔබ භාවිතා නොකරන දේවල්වලට නව ජීවිතයක් ලබා දෙන්න. විශ්වාසයෙන් බෙදා ගන්න, කෘතඥව පිළිගන්න.",
+    "badge": "වෙළඳාමක් නොව,දේවල් බෙදා ගැනීම පමණයි.",
+    "cta": {
+      "addItem": "නව භාණ්ඩයක් දාන්න",
+      "browse": "භාණ්ඩ සොයන්න",
+      "search": "සොයන්න"
+    },
+    "search": {
+      "placeholder": "භාණ්ඩ සොයන්න…",
+      "district": "දිශාව",
+      "category": "ප්‍රවර්ගය"
+    }
+  },
+  "categories": {
+    "heading": "ජනප්‍රිය ප්‍රවර්ග",
+    "subheading": "ශ්‍රී ලාංකීය ප්‍රජාව වැඩි වශයෙන් බෙදා ගන්නා භාණ්ඩ වර්ග"
+  },
+  "filters": {
+    "titleSidebar": "පෙරහන්",
+    "placeholderSearch": "භාණ්ඩ සොයන්න…",
+    "district": "දිස්ත්‍රික්කය",
+    "city": "නගරය",
+    "selectDistrictFirst": "ප්‍රදේශයක් තෝරන්න",
+    "category": "ප්‍රවර්ගය",
+    "search": "සොයන්න"
+  },
+  "footer": {
+    "mission": "භාවිතා නොකරන දේවල් විශ්වාසයෙන් බෙදා ගන්න. Give unused items a second life in Sri Lanka.",
+    "menu": "මෙනුව",
+    "account": "ගිණුම",
+    "links": {
+      "home": "මුල් පිටුව / Home",
+      "items": "භාණ්ඩ / Items",
+      "about": "අප ගැන / About",
+      "contact": "සම්බන්ධ / Contact",
+      "login": "ලොග් වෙන්න / Login",
+      "signup": "ගිණුමක් තනන්න / Sign up",
+      "dashboard": "මගේ ගිණුම / My account"
+    },
+    "reminder": "No buying-selling. Only giving with kindness. Report issues: hello@godakpin.lk",
+    "copyright": "© {{year}} GodakPin.lk",
+    "tagline": "Built for sharing, not selling."
+  },
+  "home": {
+    "heading": "නවතම භාණ්ඩ",
+    "subheading": "ප්‍රජාවෙන් නවතම ලැයිස්තු",
+    "viewAll": "සියල්ල බලන්න →",
+    "empty": "මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න."
+  },
+  "itemsList": {
+    "title": "භාණ්ඩ / Items",
+    "filters": "Filters",
+    "refine": "Refine items",
+    "sectionTitle": "භාණ්ඩ",
+    "empty": "මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න."
+  },
+  "category": {
+    "furniture": "ගෘහ භාණ්ඩ",
+    "books": "පොත්/පාසල් උපකරණ",
+    "clothing": "ඇදුම් පැලදුම්",
+    "kitchen": "ආහාර භාණ්ඩ",
+    "electronics": "ඉලෙක්ට්‍රොනික උපකරණ",
+    "kids": "ළමා භාණ්ඩ",
+    "sports": "ක්‍රීඩා සහ සෙල්ලම්",
+    "gardening": "කෘෂිකර්ම",
+    "other": "වෙනත්"
+  },
+  "auth": {
+    "login": {
+      "title": "ලොග් වෙන්න",
+      "subtitle": "Login to continue",
+      "email": "Email",
+      "password": "Password",
+      "submit": "ලොග් වෙන්න",
+      "error": "Could not login"
+    },
+    "register": {
+      "title": "ගිණුමක් තනන්න",
+      "subtitle": "Create your account",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "mobile": "Mobile",
+      "district": "District",
+      "city": "Nearest City",
+      "submit": "ගිණුමක් තනන්න",
+      "error": "Could not register",
+      "passwordMismatch": "Passwords do not match",
+      "existing": "දැනටමත් ගිණුමක් තියෙනවද?",
+      "districtSelect": "Select district",
+      "cityPlaceholder": "Select or search your city"
+    },
+    "or": "or"
+  },
+  "citySelect": {
+    "placeholder": "Select or search your city",
+    "helper": "Type to search and pick a major city near you."
+  },
+  "itemCard": {
+    "boosted": "උසස් කළා",
+    "details": "විස්තර බලන්න",
+    "cityFallback": "නගරය",
+    "published": "ප්‍රකාශය {{time}}ට පෙර",
+    "status": {
+      "available": "ලබා දීමට",
+      "reserved": "රඳවා ඇත",
+      "given": "ලබා දී ඇත"
+    }
+  },
+  "itemDetail": {
+    "donorLabel": "දායකයා",
+    "back": "ආපසු",
+    "notFound": "භාණ්ඩය සොයාගත නොහැක.",
+    "statusLabel": "තත්ත්වය",
+    "status": {
+      "available": "ලබා දීමට",
+      "reserved": "රඳවා ඇත",
+      "given": "ලබා දී ඇත"
+    },
+    "statusOptions": {
+      "available": "ලබා දීමට",
+      "reserved": "රඳවා ඇත",
+      "given": "ලබා දී ඇත"
+    },
+    "statusSaving": "සුරකිමින්...",
+    "statusButton": "තත්ත්වය යාවත්කාලීන කරන්න",
+    "callButton": "දායකයාට ඇමතුමක්",
+    "chatButton": "දායකයා සමඟ කතා කරන්න",
+    "shareButton": "මෙම භාණ්ඩය බෙදා ගන්න",
+    "reportButton": "මෙම භාණ්ඩය වාර්තා කරන්න",
+    "conditionLabel": "තත්ත්වය",
+    "safetyNote": "⚠️ දායකයා හා ලබාගන්නා වියදම් pickup/ඇතුළත් කිරීම කළමනාකරණය කරනු ලබන අතර, ආරක්ෂිත පොදු ස්ථානවලදී හමුවී භාණ්ඩ පරීක්ෂා කර ගන්න.",
+    "toast": {
+      "boostReturn": "ස්තුතියි! ගෙවීම තහවුරු කරමින් සිටිමු. Boost එක ඉක්මනින් පෙන්වනු ඇත.",
+      "boostCancelled": "ගෙවීම අවලංගු විය. Boost සක්‍රීය වී නැත."
+    },
+    "boostAction": "පැය 24ක් සඳහා උසස් කරන්න",
+    "boosting": "උසස් කිරීම...",
+    "boostActive": "ක්‍රියාත්මක වේ",
+    "boost": {
+      "notBoostedLine1": "රු. 800.00 ක් ගෙවා පැය 24ක් අතර දැන්වීම උසස් කර මෙම අයිතමය ඉක්මනින් ලබා දෙන්න.",
+      "notBoostedLine2": "මෙම අයිතමය ඉක්මනින් ගෙවා ගැනීමට අවශ්‍යද? පහළින් Boost කරන්න.",
+      "boostedLine1": "ඔබේ දැන්වීම ඉහළින් පෙනේ. ඇති ඉල්ලීම් අමතන ලෙස දිනපතා සකස් කරගන්න.",
+      "boostedLine2": "ප්‍රතිචාර දැන්ම ලබා දී, අවශ්‍ය අය සමඟ සම්බන්ධ වන්න.",
+      "currentlyBoosted": "දැනට උසස් කර ඇත",
+      "needThisGone": "මෙම අයිතමය ඉක්මනින් ලබා දීමට අවශ්‍යද?"
+    },
+    "share": {
+      "title": "Spread the word",
+      "description": "Send this ad to a friend or a community group and help it reach the right hands.",
+      "linkLabel": "Share link",
+      "copy": "Copy link",
+      "copied": "Copied!",
+      "quickShare": "Quick share",
+      "deviceShare": "Share on device",
+      "close": "Close share options"
+    },
+    "report": {
+      "title": "Report this item",
+      "reason": "Reason",
+      "placeholder": "Select a reason",
+      "inappropriate": "Inappropriate content",
+      "spam": "Spam / duplicates",
+      "safety": "Safety concern",
+      "other": "Other",
+      "details": "More details (optional)",
+      "submit": "Submit report",
+      "sending": "Sending..."
+    },
+    "published": "ප්‍රකාශය {{time}}ට පෙර",
+    "locationMissing": "ස්ථානය ලබා දී නොමැත",
+    "chatOpened": "සංවාදය විවෘත කරන ලදී"
+  },
+  "language": {
+    "si": "සිංහල",
+    "en": "English"
+  }
+}

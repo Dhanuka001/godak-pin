@@ -1,0 +1,198 @@
+{
+  "nav": {
+    "chat": "Chat",
+    "account": "Account",
+    "home": "Home",
+    "items": "Items",
+    "about": "About",
+    "contact": "Contact",
+    "admin": "Admin",
+    "login": "Login",
+    "signup": "Sign up",
+    "dashboard": "My account",
+    "greeting": "Hello, {{name}}"
+  },
+  "notice": {
+    "marquee": "This site is for giving only — no buying or selling. Share unused items freely."
+  },
+  "hero": {
+    "title": "Share the items you no longer use with someone who can put them to good use.",
+    "description": "Give unused items a new life in Sri Lanka. Share with trust, receive with gratitude.",
+    "badge": "No buying-selling, only giving",
+    "cta": {
+      "addItem": "Add new item",
+      "browse": "Browse items",
+      "search": "Search"
+    },
+    "search": {
+      "placeholder": "Search items…",
+      "district": "District",
+      "category": "Category"
+    }
+  },
+  "categories": {
+    "heading": "Popular categories",
+    "subheading": "Sri Lankan communities share these categories most"
+  },
+  "filters": {
+    "titleSidebar": "Filters",
+    "placeholderSearch": "Search items…",
+    "district": "District",
+    "city": "City",
+    "selectDistrictFirst": "Select district first",
+    "category": "Category",
+    "search": "Search"
+  },
+  "footer": {
+    "mission": "Give unused items a second life in Sri Lanka. Share with trust and kindness.",
+    "menu": "Menu",
+    "account": "Account",
+    "links": {
+      "home": "Home",
+      "items": "Items",
+      "about": "About",
+      "contact": "Contact",
+      "login": "Login",
+      "signup": "Sign up",
+      "dashboard": "My account"
+    },
+    "reminder": "No buying-selling. Only giving with kindness. Report issues: hello@godakpin.lk",
+    "copyright": "© {{year}} GodakPin.lk",
+    "tagline": "Built for sharing, not selling."
+  },
+  "home": {
+    "heading": "Latest items",
+    "subheading": "Fresh listings from the community",
+    "viewAll": "See everything →",
+    "empty": "No items found in this area. Please check back later."
+  },
+  "itemsList": {
+    "title": "Items",
+    "filters": "Filters",
+    "refine": "Refine items",
+    "sectionTitle": "Items",
+    "empty": "No items found in this area. Please check back later."
+  },
+  "category": {
+    "furniture": "Furniture & Home",
+    "books": "Books & School",
+    "clothing": "Clothing & Fashion",
+    "kitchen": "Kitchen & Dining",
+    "electronics": "Electronics",
+    "kids": "Kids & Baby",
+    "sports": "Sports & Games",
+    "gardening": "Gardening",
+    "other": "Other"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Login to continue",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Login",
+      "error": "Could not login"
+    },
+    "register": {
+      "title": "Register",
+      "subtitle": "Create your account",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "mobile": "Mobile",
+      "district": "District",
+      "city": "Nearest City",
+      "submit": "Sign up",
+      "error": "Could not register",
+      "passwordMismatch": "Passwords do not match",
+      "existing": "Already have an account?",
+      "districtSelect": "Select district",
+      "cityPlaceholder": "Select or search your city"
+    },
+    "or": "or"
+  },
+  "citySelect": {
+    "placeholder": "Select or search your city",
+    "helper": "Type to search and pick a major city near you."
+  },
+  "itemCard": {
+    "boosted": "Boosted",
+    "details": "View details",
+    "cityFallback": "City",
+    "published": "Published {{time}}",
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "given": "Given"
+    }
+  },
+  "itemDetail": {
+    "donorLabel": "Donor",
+    "back": "Back",
+    "notFound": "Item not found.",
+    "statusLabel": "Status",
+    "status": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "given": "Given"
+    },
+    "statusOptions": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "given": "Given"
+    },
+    "statusSaving": "Saving...",
+    "statusButton": "Update status",
+    "callButton": "Call donor",
+    "chatButton": "Chat with donor",
+    "shareButton": "Share this item",
+    "reportButton": "Report this item",
+    "conditionLabel": "Condition",
+    "safetyNote": "⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.",
+    "toast": {
+      "boostReturn": "Thanks! We are confirming your payment. Boost will appear shortly.",
+      "boostCancelled": "Payment cancelled. Boost not activated."
+    },
+    "boostAction": "Boost for 24 hours",
+    "boosting": "Boosting…",
+    "boostActive": "Active until",
+    "boost": {
+      "notBoostedLine1": "Boost your ad for 24 hours for Rs. 800.00. Move this item quickly and keep your home space free.",
+      "notBoostedLine2": "Need this item gone fast? Tap boost below.",
+      "boostedLine1": "Your ad is boosted and sitting at the top. Stay responsive to close the pickup quickly.",
+      "boostedLine2": "Keep replying swiftly so the community can take it home.",
+      "currentlyBoosted": "Currently boosted",
+      "needThisGone": "Need this gone fast?"
+    },
+    "share": {
+      "title": "Spread the word",
+      "description": "Send this ad to a friend or a community group and help it reach the right hands.",
+      "linkLabel": "Share link",
+      "copy": "Copy link",
+      "copied": "Copied!",
+      "quickShare": "Quick share",
+      "deviceShare": "Share on device",
+      "close": "Close share options"
+    },
+    "report": {
+      "title": "Report this item",
+      "reason": "Reason",
+      "placeholder": "Select a reason",
+      "inappropriate": "Inappropriate content",
+      "spam": "Spam / duplicates",
+      "safety": "Safety concern",
+      "other": "Other",
+      "details": "More details (optional)",
+      "submit": "Submit report",
+      "sending": "Sending..."
+    },
+    "published": "Published {{time}}",
+    "locationMissing": "Location not provided",
+    "chatOpened": "Chat opened"
+  },
+  "language": {
+    "si": "සිංහල",
+    "en": "English"
+  }
+}

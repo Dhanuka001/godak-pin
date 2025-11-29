@@ -1,0 +1,182 @@
+{
+  "nav": {
+    "chat": "",
+    "account": "",
+    "home": "",
+    "items": "",
+    "about": "",
+    "contact": "",
+    "admin": "",
+    "login": "",
+    "signup": "",
+    "dashboard": "",
+    "greeting": ""
+  },
+  "notice": {
+    "marquee": ""
+  },
+  "hero": {
+    "title": "",
+    "description": "",
+    "badge": "",
+    "cta": {
+      "addItem": "",
+      "browse": "",
+      "search": ""
+    },
+    "search": {
+      "placeholder": "",
+      "district": "",
+      "category": ""
+    }
+  },
+  "categories": {
+    "heading": "",
+    "subheading": ""
+  },
+  "filters": {
+    "titleSidebar": "",
+    "placeholderSearch": "",
+    "district": "",
+    "city": "",
+    "selectDistrictFirst": "",
+    "category": "",
+    "search": ""
+  },
+  "footer": {
+    "mission": "",
+    "menu": "",
+    "account": "",
+    "links": {
+      "home": "",
+      "items": "",
+      "about": "",
+      "contact": "",
+      "login": "",
+      "signup": "",
+      "dashboard": ""
+    },
+    "reminder": "",
+    "copyright": "",
+    "tagline": ""
+  },
+  "home": {
+    "heading": "",
+    "subheading": "",
+    "viewAll": "",
+    "empty": ""
+  },
+  "itemsList": {
+    "title": "",
+    "filters": "",
+    "refine": "",
+    "sectionTitle": "",
+    "empty": ""
+  },
+  "category": {
+    "furniture": "",
+    "books": "",
+    "clothing": "",
+    "kitchen": "",
+    "electronics": "",
+    "kids": "",
+    "sports": "",
+    "gardening": "",
+    "other": ""
+  },
+  "auth": {
+    "login": {
+      "title": "",
+      "subtitle": "",
+      "email": "",
+      "password": "",
+      "submit": "",
+      "error": ""
+    },
+    "register": {
+      "title": "",
+      "subtitle": "",
+      "name": "",
+      "email": "",
+      "password": "",
+      "confirmPassword": "",
+      "mobile": "",
+      "district": "",
+      "city": "",
+      "submit": "",
+      "error": "",
+      "passwordMismatch": "",
+      "existing": "",
+      "districtSelect": "",
+      "cityPlaceholder": ""
+    },
+    "or": ""
+  },
+  "citySelect": {
+    "placeholder": "",
+    "helper": ""
+  },
+  "itemCard": {
+    "boosted": "",
+    "details": "",
+    "cityFallback": "",
+    "status": {
+      "available": "",
+      "reserved": "",
+      "given": ""
+    }
+  },
+  "itemDetail": {
+    "donorLabel": "",
+    "back": "",
+    "statusLabel": "",
+    "callButton": "",
+    "chatButton": "",
+    "shareButton": "",
+    "reportButton": "",
+    "conditionLabel": "",
+    "safetyNote": "",
+    "boostAction": "",
+    "boosting": "",
+    "boostActive": "",
+    "toast": {
+      "boostReturn": "",
+      "boostCancelled": ""
+    },
+    "share": {
+      "title": "",
+      "description": "",
+      "linkLabel": "",
+      "copy": "",
+      "copied": "",
+      "quickShare": "",
+      "deviceShare": "",
+      "close": ""
+    },
+    "locationMissing": "",
+    "report": {
+      "title": "",
+      "reason": "",
+      "placeholder": "",
+      "inappropriate": "",
+      "spam": "",
+      "safety": "",
+      "other": "",
+      "details": "",
+      "submit": "",
+      "sending": ""
+    },
+    "chatOpened": ""
+  },
+  "boost": {
+    "notBoostedLine1": "",
+    "notBoostedLine2": "",
+    "boostedLine1": "",
+    "boostedLine2": ""
+  },
+  "language": {
+    "si": "",
+    "en": "",
+    "ta": ""
+  }
+}

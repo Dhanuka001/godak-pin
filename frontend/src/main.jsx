@@ -6,12 +6,15 @@ import App from './App';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
+import { LocaleProvider } from './context/LocaleContext';
 
 const Providers = ({ children }) => (
   <BrowserRouter>
-    <AuthProvider>
-      <ChatProvider>{children}</ChatProvider>
-    </AuthProvider>
+    <LocaleProvider>
+      <AuthProvider>
+        <ChatProvider>{children}</ChatProvider>
+      </AuthProvider>
+    </LocaleProvider>
   </BrowserRouter>
 );
 

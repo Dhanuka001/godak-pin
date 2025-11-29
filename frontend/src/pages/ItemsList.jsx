@@ -4,6 +4,7 @@ import Filters from '../components/Filters';
 import ItemCard from '../components/ItemCard';
 import SkeletonItemCard from '../components/SkeletonItemCard';
 import api from '../utils/api';
+import { useLocale } from '../context/LocaleContext';
 
 const ItemsList = () => {
   const location = useLocation();
@@ -36,10 +37,12 @@ const ItemsList = () => {
     setShowFilters(false);
   };
 
+  const { t } = useLocale();
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 pb-20">
       <div className="mb-4 md:hidden flex items-center justify-between">
-        <h2 className="text-lg font-semibold">භාණ්ඩ / Items</h2>
+        <h2 className="text-lg font-semibold">{t('itemsList.title')}</h2>
         <button
           onClick={() => setShowFilters((v) => !v)}
           className="inline-flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 shadow"
@@ -52,7 +55,7 @@ const ItemsList = () => {
               <circle cx="12" cy="19" r="1.5" />
             </svg>
           </span>
-          <span>Filters</span>
+          <span>{t('itemsList.filters')}</span>
         </button>
       </div>
       {showFilters && (
@@ -60,7 +63,7 @@ const ItemsList = () => {
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowFilters(false)} />
           <div className="absolute top-0 left-0 right-0 bg-white rounded-b-3xl shadow-2xl p-4 animate-slideDown">
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-semibold text-slate-800">Refine items</h4>
+              <h4 className="text-lg font-semibold text-slate-800">{t('itemsList.refine')}</h4>
               <button className="text-slate-500" onClick={() => setShowFilters(false)}>
                 ✕
               </button>
@@ -74,7 +77,7 @@ const ItemsList = () => {
           <Filters values={filters} onChange={setFilters} onSubmit={onSubmit} layout="sidebar" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-4 hidden md:block">භාණ්ඩ</h2>
+          <h2 className="text-xl font-semibold mb-4 hidden md:block">{t('itemsList.sectionTitle')}</h2>
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
               {Array.from({ length: 6 }).map((_, idx) => (
@@ -82,9 +85,7 @@ const ItemsList = () => {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="card p-6 text-center text-slate-600">
-              මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න.
-            </div>
+            <div className="card p-6 text-center text-slate-600">{t('itemsList.empty')}</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
               {items.map((item) => (

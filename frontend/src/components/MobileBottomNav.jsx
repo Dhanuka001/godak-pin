@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import { useChatContext } from '../context/ChatContext';
+import { useLocale } from '../context/LocaleContext';
 
 const IconHome = () => (
   <svg aria-hidden viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -31,35 +32,37 @@ const IconChat = () => (
   </svg>
 );
 
-const items = [
-  { to: '/', label: 'Home', icon: IconHome, type: 'link' },
-  { to: '/items', label: 'Items', icon: IconBag, type: 'link' },
-  { label: 'Chat', icon: IconChat, type: 'action' },
-  { to: '/dashboard', label: 'Account', icon: IconUser, type: 'link' },
-];
-
 const MobileBottomNav = () => {
   const { user } = useAuthContext();
   const location = useLocation();
   const { unreadCount } = useChatContext();
   const badgeLabel = unreadCount > 99 ? '99+' : unreadCount;
+  const { t } = useLocale();
+  const navItems = [
+    { to: '/', labelKey: 'nav.home', icon: IconHome, type: 'link' },
+    { to: '/items', labelKey: 'nav.items', icon: IconBag, type: 'link' },
+    { labelKey: 'nav.chat', icon: IconChat, type: 'action' },
+    { to: '/dashboard', labelKey: 'nav.account', icon: IconUser, type: 'link' },
+  ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 z-30">
       <div className="grid grid-cols-4 text-center text-xs font-semibold text-slate-700">
-        {items.map((item) => {
+        {navItems.map((item) => {
           const isActive = item.to && location.pathname === item.to;
+          const isChatActive = location.pathname.startsWith('/chat');
           const Icon = item.icon;
+          const label = t(item.labelKey);
           if (item.type === 'action') {
             const target = user ? '/chat' : '/login';
             return (
               <Link
-                key={item.label}
+                key={item.labelKey}
                 to={target}
-                className="relative py-3 flex flex-col items-center gap-1"
+                className={`relative py-3 flex flex-col items-center gap-1 ${isChatActive ? 'text-primary' : ''}`}
               >
                 <Icon />
-                <span className="text-[11px]">{item.label}</span>
+                <span className="text-[11px]">{label}</span>
                 {unreadCount > 0 && (
                   <span
                     className="absolute top-1 right-6 inline-flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
@@ -74,23 +77,23 @@ const MobileBottomNav = () => {
           if (item.to === '/dashboard' && !user) {
             return (
               <Link
-                key={item.label}
+                key={item.labelKey}
                 to="/login"
                 className={`py-3 flex flex-col items-center gap-1 ${isActive ? 'text-primary' : ''}`}
               >
                 <Icon />
-                <span className="text-[11px]">Account</span>
+                <span className="text-[11px]">{label}</span>
               </Link>
             );
           }
           return (
             <Link
-              key={item.label}
+              key={item.labelKey}
               to={item.to}
               className={`py-3 flex flex-col items-center gap-1 ${isActive ? 'text-primary' : ''}`}
             >
               <Icon />
-              <span className="text-[11px]">{item.label}</span>
+              <span className="text-[11px]">{label}</span>
             </Link>
           );
         })}

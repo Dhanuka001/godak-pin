@@ -9,6 +9,7 @@ const router = express.Router();
 const PAYHERE_CHECKOUT_URL = (process.env.PAYHERE_CHECKOUT_URL || 'https://sandbox.payhere.lk/pay/checkout').trim();
 const BOOST_PRICE = Number(process.env.BOOST_PRICE_LKR || 800);
 const CURRENCY = 'LKR';
+const BOOSTING_ENABLED = process.env.ENABLE_BOOSTING === 'true';
 
 const formatAmount = (amount) => (Number(amount) || 0).toFixed(2);
 
@@ -56,6 +57,9 @@ const getPayHereConfig = () => {
 
 // Create a PayHere checkout payload for boosting an item
 router.post('/boost/create', auth, async (req, res, next) => {
+  if (!BOOSTING_ENABLED) {
+    return res.status(403).json({ message: 'Boosting is temporarily disabled' });
+  }
   try {
     const { merchantId, merchantSecret, checkoutUrl } = getPayHereConfig();
     if (!merchantId || !merchantSecret) {
@@ -128,6 +132,9 @@ router.post('/boost/create', auth, async (req, res, next) => {
 
 // PayHere server-to-server notification (IPN)
 router.post('/boost/notify', async (req, res, next) => {
+  if (!BOOSTING_ENABLED) {
+    return res.status(404).json({ message: 'Boost notifications are disabled' });
+  }
   try {
     const { merchantId, merchantSecret } = getPayHereConfig();
     const { merchant_id, order_id, payhere_amount, payhere_currency, status_code, md5sig, payment_id } = req.body;

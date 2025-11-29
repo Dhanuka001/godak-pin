@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const Item = require('../models/Item');
 const Report = require('../models/Report');
+const BOOSTING_ENABLED = process.env.ENABLE_BOOSTING === 'true';
 
 const router = express.Router();
 
@@ -157,8 +158,8 @@ router.put('/:slugOrId/status', auth, async (req, res, next) => {
 // Boost item (owner only)
 router.post('/:slugOrId/boost', auth, async (req, res, next) => {
   try {
-    if (process.env.ALLOW_DIRECT_BOOST !== 'true') {
-      return res.status(403).json({ message: 'Boosting requires a successful payment.' });
+    if (!BOOSTING_ENABLED) {
+      return res.status(403).json({ message: 'Boosting is temporarily disabled.' });
     }
     const item = await findItemByParam(req.params.slugOrId);
     if (!item) return res.status(404).json({ message: 'Item not found' });

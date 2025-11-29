@@ -1,70 +1,69 @@
 import { Link } from 'react-router-dom';
+import { useLocale } from '../context/LocaleContext';
 
 const Footer = () => {
+  const { t } = useLocale();
+  const year = new Date().getFullYear();
   return (
     <footer className="bg-slate-900 text-slate-100 mt-12">
       <div className="container-fixed py-10 grid gap-8 md:grid-cols-4">
         <div className="space-y-3">
           <div className="text-2xl font-semibold text-primary-light">GodakPin.lk</div>
-          <p className="text-sm text-slate-300">
-            භාවිතා නොකරන දේවල් විශ්වාසයෙන් බෙදා ගන්න. Give unused items a second life in Sri Lanka.
-          </p>
+          <p className="text-sm text-slate-300">{t('footer.mission')}</p>
         </div>
         <div>
-          <h4 className="font-semibold mb-3">මෙනුව</h4>
+          <h4 className="font-semibold mb-3">{t('footer.menu')}</h4>
           <ul className="space-y-2 text-sm text-slate-300">
             <li>
               <Link to="/" className="hover:text-primary-light">
-                මුල් පිටුව / Home
+                {t('footer.links.home')}
               </Link>
             </li>
             <li>
               <Link to="/items" className="hover:text-primary-light">
-                භාණ්ඩ / Items
+                {t('footer.links.items')}
               </Link>
             </li>
             <li>
               <Link to="/about" className="hover:text-primary-light">
-                අප ගැන / About
+                {t('footer.links.about')}
               </Link>
             </li>
             <li>
               <Link to="/contact" className="hover:text-primary-light">
-                සම්බන්ධ / Contact
+                {t('footer.links.contact')}
               </Link>
             </li>
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold mb-3">ගිණුම</h4>
+          <h4 className="font-semibold mb-3">{t('footer.account')}</h4>
           <ul className="space-y-2 text-sm text-slate-300">
             <li>
               <Link to="/login" className="hover:text-primary-light">
-                ලොග් වෙන්න / Login
+                {t('footer.links.login')}
               </Link>
             </li>
             <li>
               <Link to="/register" className="hover:text-primary-light">
-                ගිණුමක් තනන්න / Sign up
+                {t('footer.links.signup')}
               </Link>
             </li>
             <li>
               <Link to="/dashboard" className="hover:text-primary-light">
-                මගේ භාණ්ඩ / My items
+                {t('footer.links.dashboard')}
               </Link>
             </li>
           </ul>
         </div>
         <div className="space-y-3">
-          <div className="text-sm text-slate-300">
-            No buying-selling. Only giving with kindness. Report issues: hello@godakpin.lk
-          </div>
+          <div className="text-sm text-slate-300">{t('footer.reminder')}</div>
         </div>
       </div>
       <div className="border-t border-slate-800">
         <div className="container-fixed py-4 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
-          <span>© {new Date().getFullYear()} GodakPin.lk</span>
-          <span>Built for sharing, not selling.</span>
+          <span>{t('footer.copyright', '', { year })}</span>
+          <span>{t('footer.tagline')}</span>
         </div>
       </div>
     </footer>

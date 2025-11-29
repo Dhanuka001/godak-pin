@@ -5,6 +5,7 @@ import Categories from '../components/Categories';
 import ItemCard from '../components/ItemCard';
 import SkeletonItemCard from '../components/SkeletonItemCard';
 import api from '../utils/api';
+import { useLocale } from '../context/LocaleContext';
 
 const Home = () => {
   const [items, setItems] = useState([]);
@@ -27,21 +28,23 @@ const Home = () => {
     fetchItems();
   }, []);
 
+  const { t } = useLocale();
+
   return (
     <div>
       <Hero onSearch={(payload) => fetchItems(payload)} />
       <Categories />
-      <section className="max-w-7xl mx-auto px-4 pt-12 pb-12 space-y-4">
+      <section className="max-w-7xl mx-auto px-4 pt-4 pb-12 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 mb-1">නවතම භාණ්ඩ</h2>
-            <div className="text-sm text-slate-600">Latest items</div>
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">{t('home.heading')}</h2>
+            <div className="text-sm text-slate-600">{t('home.subheading')}</div>
           </div>
           <button
             onClick={() => navigate('/items')}
             className="text-primary hover:text-primary-dark font-semibold"
           >
-            සියල්ල බලන්න →
+            {t('home.viewAll')}
           </button>
         </div>
         {loading ? (
@@ -51,9 +54,7 @@ const Home = () => {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="card p-6 text-center text-slate-600">
-            මෙම ප්‍රදේශයේ භාණ්ඩ නොමැත. පසුව නැවත බලන්න.
-          </div>
+          <div className="card p-6 text-center text-slate-600">{t('home.empty')}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {items.slice(0, 12).map((item) => (

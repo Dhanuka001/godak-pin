@@ -2,25 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthContext } from '../../context/AuthContext';
 import AdPreviewCard from './AdPreviewCard';
 
-const buildSound = (freq, duration, audioCtxRef) => {
-  if (typeof window === 'undefined') return;
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) return;
-  const ctx = audioCtxRef.current || new AudioCtx();
-  audioCtxRef.current = ctx;
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
-  const oscillator = ctx.createOscillator();
-  const gain = ctx.createGain();
-  oscillator.frequency.value = freq;
-  gain.gain.value = 0.15;
-  oscillator.connect(gain);
-  gain.connect(ctx.destination);
-  oscillator.start();
-  oscillator.stop(ctx.currentTime + duration);
-};
-
 const ChatWindow = ({
   partner,
   messages = [],
@@ -29,16 +10,13 @@ const ChatWindow = ({
   onSend,
   typing = false,
   notifyTyping,
+  onBack,
 }) => {
   const { user } = useAuthContext();
   const [draft, setDraft] = useState('');
   const messagesEndRef = useRef(null);
-  const audioCtxRef = useRef(null);
   const lastMessageRef = useRef(null);
   const typingTimerRef = useRef(null);
-
-  const playSendSound = useCallback(() => buildSound(520, 0.09, audioCtxRef), []);
-  const playReceiveSound = useCallback(() => buildSound(320, 0.12, audioCtxRef), []);
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -49,16 +27,6 @@ const ChatWindow = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages.length, scrollToBottom, isLoading]);
-
-  useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (!last) return;
-    if (last.message_id === lastMessageRef.current) return;
-    lastMessageRef.current = last.message_id;
-    if (last.sender_id !== user?._id) {
-      playReceiveSound();
-    }
-  }, [messages, playReceiveSound, user?._id]);
 
   useEffect(() => () => {
     if (typingTimerRef.current) {
@@ -96,7 +64,6 @@ const ChatWindow = ({
     }
     const trimmed = draft.trim();
     setDraft('');
-    playSendSound();
     await onSend(partner._id, trimmed, listing?.id);
   };
 
@@ -112,16 +79,26 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
+    <div className="flex h-full flex-col rounded-3xl bg-white lg:border lg:border-slate-200 lg:shadow-sm">
+      {onBack && (
+        <div className="px-6 pt-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm font-semibold text-slate-600 hover:text-primary"
+          >
+            ← Back to conversations
+          </button>
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-400">Chat with</p>
+          <p className="text-[11px] text-slate-400">Chat with</p>
           <p className="text-xl font-semibold text-slate-900">{partner.name}</p>
         </div>
-        <div className="text-xs text-slate-500">{partner.email}</div>
       </div>
       {listing && <AdPreviewCard listing={listing} />}
-      <div className="relative flex-1 overflow-hidden px-6 py-4">
+      <div className="relative flex-1 overflow-hidden px-4 py-4 sm:px-6 sm:py-5">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/70 to-transparent pointer-events-none" />
         <div className="relative h-full overflow-y-auto pr-1 pb-4">
           {isLoading ? (

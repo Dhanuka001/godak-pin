@@ -5,6 +5,7 @@ import { useAuthContext } from '../context/AuthContext';
 import { districtNames } from '../utils/locationData';
 import CitySelect from '../components/CitySelect';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+import { useLocale } from '../context/LocaleContext';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -19,6 +20,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuthContext();
+  const { t } = useLocale();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +35,7 @@ const Register = () => {
     e.preventDefault();
     setError('');
     if (form.password !== form.confirm) {
-      setError('Passwords do not match');
+      setError(t('auth.register.passwordMismatch'));
       return;
     }
     try {
@@ -48,18 +50,18 @@ const Register = () => {
       login(res.data);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not register');
+      setError(err.response?.data?.message || t('auth.register.error'));
     }
   };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-slate-50 px-4">
       <div className="card w-full max-w-md p-6 space-y-4">
-        <h1 className="text-2xl font-semibold text-center">ගිණුමක් තනන්න</h1>
-        <div className="text-center text-sm text-slate-500">Create your account</div>
+        <h1 className="text-2xl font-semibold text-center">{t('auth.register.title')}</h1>
+        <div className="text-center text-sm text-slate-500">{t('auth.register.subtitle')}</div>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-sm text-slate-700">Name</label>
+            <label className="text-sm text-slate-700">{t('auth.register.name')}</label>
             <input
               name="name"
               type="text"
@@ -70,7 +72,7 @@ const Register = () => {
             />
           </div>
           <div>
-            <label className="text-sm text-slate-700">Email</label>
+            <label className="text-sm text-slate-700">{t('auth.register.email')}</label>
             <input
               name="email"
               type="email"
@@ -82,7 +84,7 @@ const Register = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-slate-700">Password</label>
+              <label className="text-sm text-slate-700">{t('auth.register.password')}</label>
               <input
                 name="password"
                 type="password"
@@ -93,7 +95,7 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="text-sm text-slate-700">Confirm Password</label>
+              <label className="text-sm text-slate-700">{t('auth.register.confirmPassword')}</label>
               <input
                 name="confirm"
                 type="password"
@@ -106,7 +108,7 @@ const Register = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-slate-700">Mobile</label>
+            <label className="text-sm text-slate-700">{t('auth.register.mobile')}</label>
               <input
                 name="mobile"
                 type="text"
@@ -117,7 +119,7 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="text-sm text-slate-700">District</label>
+              <label className="text-sm text-slate-700">{t('auth.register.district')}</label>
               <select
                 name="district"
                 value={form.district}
@@ -125,7 +127,7 @@ const Register = () => {
                 className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               >
-                <option value="">දිස්ත්‍රික්කය / District</option>
+                <option value="">{t('auth.register.districtSelect')}</option>
                 {districtNames.map((d) => (
                   <option key={d} value={d}>
                     {d}
@@ -135,21 +137,19 @@ const Register = () => {
             </div>
           </div>
           <div>
-            <label className="text-sm text-slate-700">Nearest City</label>
-            <CitySelect
-              district={form.district}
-              value={form.city}
-              required
-              onChange={(city) => setForm((prev) => ({ ...prev, city }))}
-              placeholder="Select or search your city"
-            />
+                <label className="text-sm text-slate-700">{t('auth.register.city')}</label>
+                <CitySelect
+                  district={form.district}
+                  value={form.city}
+                  required
+                  onChange={(city) => setForm((prev) => ({ ...prev, city }))}
+              placeholder={t('auth.register.cityPlaceholder')}
+              helperText={t('citySelect.helper')}
+                />
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
           <button type="submit" className="btn-primary w-full">
-            <span className="btn-label">
-              <span className="si">ගිණුමක් තනන්න</span>
-              <span className="en">Register</span>
-            </span>
+            {t('auth.register.submit')}
           </button>
         </form>
         <div className="flex items-center gap-2">
@@ -159,9 +159,9 @@ const Register = () => {
         </div>
         <GoogleAuthButton onSuccess={() => navigate('/dashboard')} />
         <div className="text-center text-sm">
-          දැනටමත් ගිණුමක් තියෙනවද?{' '}
+          {t('auth.register.existing')}{' '}
           <Link to="/login" className="text-primary hover:text-primary-dark">
-            ලොග් වෙන්න
+            {t('auth.login.title')}
           </Link>
         </div>
       </div>

@@ -4,6 +4,8 @@ import api from '../utils/api';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
 import { useAuthContext } from '../context/AuthContext';
 import { useChatContext } from '../context/ChatContext';
+import { useLocale } from '../context/LocaleContext';
+import { translateLocation } from '../utils/locationTranslations';
 
 const ItemDetail = () => {
   const { slug } = useParams();
@@ -23,7 +25,7 @@ const ItemDetail = () => {
   const [showShare, setShowShare] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const { selectConversation } = useChatContext();
-  const [boosting, setBoosting] = useState(false);
+  const { t, lang } = useLocale();
 
   const showToast = (text, tone = 'info') => {
     setToast({ text, tone });
@@ -64,11 +66,11 @@ const ItemDetail = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('boostReturn')) {
-      showToast('Thanks! We are confirming your payment. Boost will appear shortly.', 'success');
+      showToast(t('itemDetail.toast.boostReturn'), 'success');
       fetchItem();
     }
     if (params.get('boostCancelled')) {
-      showToast('Payment cancelled. Boost not activated.', 'error');
+      showToast(t('itemDetail.toast.boostCancelled'), 'error');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
@@ -96,13 +98,7 @@ const ItemDetail = () => {
   };
 
   const statusValue = item?.status || localStatus || 'available';
-  const statusLabel = {
-    available: 'Available / ලබා දීමට',
-    reserved: 'Reserved / රඳවා ඇත',
-    given: 'Given / ලබා දී ඇත',
-  }[statusValue];
-  const isBoosted = item?.isBoosted || (item?.boostedUntil && new Date(item.boostedUntil).getTime() > Date.now());
-
+  const statusLabel = t(`itemDetail.status.${statusValue}`, t('itemDetail.status.available'));
   const statusTone =
     statusValue === 'given'
       ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
@@ -128,6 +124,10 @@ const ItemDetail = () => {
     if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     return `${Math.max(minutes, 1)} min ago`;
   };
+
+  const timeAgo = formatTimeAgo();
+  const locationKey = item?.city || item?.location || item?.district;
+  const locationLabel = locationKey ? translateLocation(locationKey, lang) : t('itemDetail.locationMissing');
 
   const shareUrl = useMemo(() => (typeof window !== 'undefined' ? window.location.href : ''), []);
   const sharePlatforms = useMemo(() => {
@@ -237,52 +237,12 @@ const ItemDetail = () => {
     }
   };
 
-  const handleBoost = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (!isOwner) {
-      showToast('Only the owner can boost this ad', 'error');
-      return;
-    }
-    if (!item?._id) {
-      showToast('Item not ready yet', 'error');
-      return;
-    }
-    setBoosting(true);
-    try {
-      const res = await api.post('/payments/boost/create', { itemId: item._id });
-      const { checkoutUrl, payload } = res.data || {};
-      if (!checkoutUrl || !payload) throw new Error('Invalid payment session');
-
-      // Build a form and post to PayHere hosted checkout
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = checkoutUrl;
-      Object.entries(payload).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value ?? '';
-        form.appendChild(input);
-      });
-      document.body.appendChild(form);
-      showToast('Redirecting to secure payment…', 'info');
-      form.submit();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Could not boost ad', 'error');
-    } finally {
-      setBoosting(false);
-    }
-  };
-
   if (loading) return <ItemDetailSkeleton />;
 
   if (!item) {
     return (
       <div className="container-fixed py-8">
-        <div className="card p-6 text-center text-slate-600">Item not found.</div>
+        <div className="card p-6 text-center text-slate-600">{t('itemDetail.notFound')}</div>
       </div>
     );
   }
@@ -303,9 +263,18 @@ const ItemDetail = () => {
           className="inline-flex items-center gap-2 font-semibold text-sm text-primary hover:text-primary-dark"
         >
           <span aria-hidden>←</span>
-          <span>Back</span>
+          <span>{t('itemDetail.back')}</span>
         </button>
 
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold text-slate-900">{item.title}</h1>
+          <div className="flex flex-wrap gap-2 text-sm text-slate-600">
+            <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
+            <span className="bg-slate-100 px-3 py-1 rounded-full font-semibold text-slate-700">
+              {t('itemDetail.conditionLabel')}: {item.condition}
+            </span>
+          </div>
+        </div>
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="card overflow-hidden">
             <img
@@ -317,48 +286,41 @@ const ItemDetail = () => {
           <div className="space-y-4">
           <div className="card p-4 space-y-4 h-full min-h-[320px] md:min-h-[420px] flex flex-col">
               <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="text-base font-semibold text-slate-900">
-                    දායකයා: <span className="font-bold">{contact?.name || item.ownerName || 'සාමාජික'}</span>
-                  </div>
-                  {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
-                  <div>
-                    <span className=" text-primary px-3 py-1 rounded-full font-semibold inline-flex items-center gap-1">
-                      <span aria-hidden>📍</span>
-                      <span>{item.city || item.location || 'Location not provided'}</span>
-                    </span>
-                  </div>
-                </div>
+          <div className="space-y-1">
+            <div className="text-base font-semibold text-slate-900">
+              {t('itemDetail.donorLabel')}: <span className="font-bold">{contact?.name || item.ownerName || 'සාමාජික'}</span>
+            </div>
+            {contact?.note && <div className="text-sm text-slate-700">{contact.note}</div>}
+            <div>
+              <span className=" text-primary px-3 py-1 rounded-full font-semibold inline-flex items-center gap-1">
+                <span aria-hidden>📍</span>
+                <span>{locationLabel}</span>
+              </span>
+            </div>
+          </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex flex-wrap gap-2 justify-end">
                     <span className={`text-xs font-semibold px-3 py-1 rounded-full border whitespace-nowrap ${statusTone}`}>
                       {statusLabel}
                     </span>
-                    {isBoosted && (
-                      <span
-                        className="text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1"
-                        style={{ border: '1px solid #f4b000', backgroundColor: '#fff6d5', color: '#7a4b00' }}
-                      >
-                        <span aria-hidden>★</span>
-                        <span>Boosted</span>
-                      </span>
-                    )}
                   </div>
-                  <div className="text-xs text-slate-500">Published {formatTimeAgo()}</div>
+                  <div className="text-xs text-slate-500">
+                    {t('itemDetail.published', '', { time: timeAgo })}
+                  </div>
                 </div>
               </div>
               {isOwner && (
                 <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
                   <div>
-                    <label className="text-xs uppercase tracking-wide text-slate-500">Status</label>
+                    <label className="text-xs uppercase tracking-wide text-slate-500">{t('itemDetail.statusLabel')}</label>
                     <select
                       value={localStatus}
                       onChange={(e) => setLocalStatus(e.target.value)}
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                     >
-                      <option value="available">Available / ලබා දීමට</option>
-                      <option value="reserved">Reserved / රඳවා ඇත</option>
-                      <option value="given">Given / ලබා දී ඇත</option>
+                      <option value="available">{t('itemDetail.statusOptions.available')}</option>
+                      <option value="reserved">{t('itemDetail.statusOptions.reserved')}</option>
+                      <option value="given">{t('itemDetail.statusOptions.given')}</option>
                     </select>
                   </div>
                   <button
@@ -367,53 +329,8 @@ const ItemDetail = () => {
                     disabled={updatingStatus}
                     className="btn-secondary"
                   >
-                    {updatingStatus ? 'Saving...' : 'Update status'}
+                    {updatingStatus ? t('itemDetail.statusSaving') : t('itemDetail.statusButton')}
                   </button>
-                </div>
-              )}
-              {isOwner && (
-                <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center gap-2 text-amber-800 font-semibold text-sm">
-                    <span aria-hidden>⚡</span>
-                    <span>{isBoosted ? 'Currently boosted' : 'Need this gone fast?'}</span>
-                  </div>
-                  {!isBoosted && (
-                    <>
-                      <p className="text-sm text-amber-900">
-                        Boost your ad for 24 hours for <strong>Rs. 800.00</strong>. Move this item quickly and keep your home space free.
-                      </p>
-                      <p className="text-sm text-amber-900">
-                        මෙම අයිතමය ඉතා ඉක්මනින් ලබා දීමට අවශ්‍යද? පහලින් Boost කරන්න.
-                      </p>
-                    </>
-                  )}
-                  {isBoosted && (
-                    <>
-                      <p className="text-sm text-amber-900">
-                        Your ad is boosted and sitting at the top. Keep eyes on it and reply quickly to close the pickup.
-                      </p>
-                      <p className="text-sm text-amber-900">
-                        ඔබේ දැන්වීම උසස් කර ඇත.. ඉක්මනින් ප්‍රතිචාර දී අවශ්‍ය අය අමතන්න.
-                      </p>
-                    </>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {!isBoosted && (
-                      <button
-                        type="button"
-                        onClick={handleBoost}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-500 text-white px-3 py-2 text-sm font-semibold hover:bg-amber-600 disabled:opacity-70"
-                        disabled={boosting}
-                      >
-                        {boosting ? 'Boosting…' : 'Boost for 24 hours'}
-                      </button>
-                    )}
-                    {isBoosted && item?.boostedUntil && (
-                      <span className="text-xs text-amber-800">
-                        Active until {new Date(item.boostedUntil).toLocaleString()}
-                      </span>
-                    )}
-                  </div>
                 </div>
               )}
               <div className="mt-auto space-y-3 pt-2">
@@ -423,10 +340,10 @@ const ItemDetail = () => {
                     className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed text-center"
                     onClick={(e) => !contact?.mobile && e.preventDefault()}
                   >
-                    Call donor
+                    {t('itemDetail.callButton')}
                   </a>
                   <button type="button" onClick={handleStartChat} className="btn-secondary text-center">
-                    Chat with donor
+                    {t('itemDetail.chatButton')}
                   </button>
                 </div>
                 <div className="flex flex-wrap items-center mt-5 gap-3">
@@ -436,14 +353,14 @@ const ItemDetail = () => {
                     className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark transition"
                   >
                     <span aria-hidden>🔗</span>
-                    <span>Share this item</span>
+                    <span>{t('itemDetail.shareButton')}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowReport(true)}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-500"
                   >
-                    <span aria-hidden>⚠️</span> Report this item
+                    <span aria-hidden>⚠️</span> {t('itemDetail.reportButton')}
                   </button>
                 </div>
               </div>
@@ -452,18 +369,9 @@ const ItemDetail = () => {
         </div>
 
         <div className="card p-4 space-y-3">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold">{item.title}</h1>
-            <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-              <span className="bg-slate-100 px-3 py-1 rounded-full">{item.category}</span>
-              <span className="bg-slate-100 px-3 py-1 rounded-full font-semibold text-slate-700">
-                Condition: {item.condition}
-              </span>
-            </div>
-          </div>
           <p className="text-slate-700 leading-relaxed">{item.description}</p>
           <div className="text-xs text-amber-600">
-            ⚠ Donor and receiver handle pickup/delivery. Meet in safe public places and verify items before taking.
+            {t('itemDetail.safetyNote')}
           </div>
         </div>
       </div>
@@ -478,15 +386,13 @@ const ItemDetail = () => {
             <div className="relative bg-white rounded-3xl shadow-2xl p-6 space-y-5 animate-toast-pop border border-white/60">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <h3 className="text-xl font-semibold text-slate-900">Spread the word</h3>
-                  <p className="text-sm text-slate-600">
-                    Send this ad to a friend or a community group and help it reach the right hands.
-                  </p>
+                  <h3 className="text-xl font-semibold text-slate-900">{t('itemDetail.share.title')}</h3>
+                  <p className="text-sm text-slate-600">{t('itemDetail.share.description')}</p>
                 </div>
                 <button
                   className="text-slate-400 hover:text-primary transition"
                   onClick={() => setShowShare(false)}
-                  aria-label="Close share options"
+                  aria-label={t('itemDetail.share.close')}
                 >
                   ✕
                 </button>
@@ -507,7 +413,9 @@ const ItemDetail = () => {
                   ))}
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3 shadow-inner">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Share link</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('itemDetail.share.linkLabel')}
+                  </div>
                   <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 text-sm text-slate-700 break-words">
                     {shareUrl}
                   </div>
@@ -517,7 +425,7 @@ const ItemDetail = () => {
                       onClick={handleCopyLink}
                       className="inline-flex items-center gap-2 rounded-lg bg-primary text-white px-3 py-2 text-sm font-semibold shadow hover:bg-primary-dark"
                     >
-                      {copiedLink ? 'Copied!' : 'Copy link'}
+                      {copiedLink ? t('itemDetail.share.copied') : t('itemDetail.share.copy')}
                     </button>
                     <button
                       type="button"
@@ -526,7 +434,7 @@ const ItemDetail = () => {
                       disabled={!canNativeShare}
                     >
                       <span aria-hidden>📲</span>
-                      {canNativeShare ? 'Quick share' : 'Share on device'}
+                      {canNativeShare ? t('itemDetail.share.quickShare') : t('itemDetail.share.deviceShare')}
                     </button>
                   </div>
                 </div>
@@ -540,7 +448,7 @@ const ItemDetail = () => {
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowReport(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-5 space-y-3 animate-toast-pop">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Report this item</h3>
+              <h3 className="text-lg font-semibold">{t('itemDetail.report.title')}</h3>
               <button className="text-slate-500 hover:text-primary" onClick={() => setShowReport(false)}>
                 ✕
               </button>
@@ -552,15 +460,15 @@ const ItemDetail = () => {
                 onChange={(e) => setReportReason(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary mt-1"
               >
-                <option value="">Select a reason</option>
-                <option value="inappropriate">Inappropriate content</option>
-                <option value="spam">Spam / duplicates</option>
-                <option value="safety">Safety concern</option>
-                <option value="other">Other</option>
+                <option value="">{t('itemDetail.report.placeholder')}</option>
+                <option value="inappropriate">{t('itemDetail.report.inappropriate')}</option>
+                <option value="spam">{t('itemDetail.report.spam')}</option>
+                <option value="safety">{t('itemDetail.report.safety')}</option>
+                <option value="other">{t('itemDetail.report.other')}</option>
               </select>
             </div>
             <div>
-              <label className="text-sm text-slate-700">More details (optional)</label>
+              <label className="text-sm text-slate-700">{t('itemDetail.report.details')}</label>
               <textarea
                 value={reportMessage}
                 onChange={(e) => setReportMessage(e.target.value)}
@@ -573,7 +481,7 @@ const ItemDetail = () => {
               disabled={!reportReason || reporting}
               className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {reporting ? 'Sending...' : 'Submit report'}
+              {reporting ? t('itemDetail.report.sending') : t('itemDetail.report.submit')}
             </button>
           </div>
         </div>
