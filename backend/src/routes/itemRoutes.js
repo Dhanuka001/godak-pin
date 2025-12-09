@@ -16,7 +16,7 @@ const findItemByParam = (param) => {
 router.get('/', async (req, res, next) => {
   try {
     const { q, district, category, city, limit } = req.query;
-    const query = {};
+    const query = { status: { $ne: 'deleted' } };
 
     if (q) {
       query.$text = { $search: q };
@@ -50,10 +50,12 @@ router.get('/', async (req, res, next) => {
 // Get single item (by slug or id)
 router.get('/:slugOrId', async (req, res, next) => {
   try {
-    const query = mongoose.Types.ObjectId.isValid(req.params.slugOrId)
+    const match = mongoose.Types.ObjectId.isValid(req.params.slugOrId)
       ? { _id: req.params.slugOrId }
       : { slug: req.params.slugOrId };
-    const item = await Item.findOne(query).populate('owner', 'name email mobile district city contactNote').lean();
+    const item = await Item.findOne({ ...match, status: { $ne: 'deleted' } })
+      .populate('owner', 'name email mobile district city contactNote')
+      .lean();
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }

@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useAuthContext } from '../context/AuthContext';
+import { useLocale } from '../context/LocaleContext';
 import ItemCard from '../components/ItemCard';
+import CitySelect from '../components/CitySelect';
+import { districtNames } from '../utils/locationData';
+import { categories } from '../utils/categoryData';
+
+const conditions = ['Like new', 'Used - good', 'Used - fair'];
+const createEmptyEditForm = () => ({
+  title: '',
+  category: '',
+  description: '',
+  condition: '',
+  district: '',
+  city: '',
+});
 
 const Admin = () => {
   const { user } = useAuthContext();
+  const { t } = useLocale();
   const [stats, setStats] = useState(null);
   const [reports, setReports] = useState([]);
   const [items, setItems] = useState([]);
@@ -13,6 +28,13 @@ const Admin = () => {
   const [updating, setUpdating] = useState(null);
   const [itemActionId, setItemActionId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState(createEmptyEditForm());
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editImages, setEditImages] = useState([]);
+  const [editPrimaryImageIndex, setEditPrimaryImageIndex] = useState(0);
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,32 +93,117 @@ const Admin = () => {
     setConfirmAction(null);
   };
 
-  const editItem = async (item) => {
-    const title = window.prompt('New title', item.title);
-    if (title === null) return;
-    const description = window.prompt('New description', item.description || '');
-    if (description === null) return;
-    setItemActionId(item._id);
-    try {
-      const res = await api.put(`/admin/items/${item._id}`, { title, description });
-      setItems((prev) => prev.map((it) => (it._id === item._id ? res.data : it)));
-    } catch (err) {
-      // ignore
-    } finally {
-      setItemActionId(null);
-    }
+  const openEditModal = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      title: item.title || '',
+      category: item.category || '',
+      description: item.description || '',
+      condition: item.condition || '',
+      district: item.district || '',
+      city: item.city || '',
+    });
+    setEditError('');
+    setEditImages([]);
+    setEditPrimaryImageIndex(0);
+    setEditModalOpen(true);
   };
 
-  const deleteItem = async (id) => {
-    if (!window.confirm('Delete this item permanently?')) return;
-    setItemActionId(id);
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingItem(null);
+    setEditForm(createEmptyEditForm());
+    setEditError('');
+    setEditImages([]);
+    setEditPrimaryImageIndex(0);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'district') {
+      setEditForm((prev) => ({ ...prev, district: value, city: '' }));
+      return;
+    }
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditCityChange = (city) => {
+    setEditForm((prev) => ({ ...prev, city }));
+  };
+
+  const handleEditImages = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const readers = files.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        })
+    );
+    Promise.all(readers).then((images) => {
+      setEditImages((prev) => {
+        const next = [...prev, ...images];
+        setEditPrimaryImageIndex((prevIndex) => {
+          if (!next.length) return 0;
+          if (prevIndex >= next.length) return next.length - 1;
+          return prevIndex;
+        });
+        return next;
+      });
+      e.target.value = '';
+    });
+  };
+
+  const setEditPrimaryImage = (idx) => {
+    setEditPrimaryImageIndex(idx);
+  };
+
+  const removeEditImage = (idx) => {
+    setEditImages((prev) => {
+      const nextImages = prev.filter((_, index) => index !== idx);
+      setEditPrimaryImageIndex((prevIndex) => {
+        if (!nextImages.length) return 0;
+        if (idx === prevIndex) {
+          return Math.min(prevIndex, nextImages.length - 1);
+        }
+        if (prevIndex > idx) {
+          return prevIndex - 1;
+        }
+        return prevIndex;
+      });
+      return nextImages;
+    });
+  };
+
+  const submitEditForm = async (e) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    setEditSaving(true);
+    setEditError('');
     try {
-      await api.delete(`/admin/items/${id}`);
-      setItems((prev) => prev.filter((item) => item._id !== id));
+      const payload = { ...editForm };
+      if (editImages.length) {
+        const normalizedImages = editImages.map((url, idx) => ({
+          url,
+          isPrimary: editPrimaryImageIndex === idx,
+        }));
+        const primaryImage =
+          normalizedImages.find((img) => img.isPrimary)?.url ||
+          normalizedImages[0]?.url ||
+          editingItem.imageUrl ||
+          '/images/placeholder.jpg';
+        payload.images = normalizedImages;
+        payload.imageUrl = primaryImage;
+      }
+      const res = await api.put(`/admin/items/${editingItem._id}`, payload);
+      setItems((prev) => prev.map((it) => (it._id === editingItem._id ? res.data : it)));
+      closeEditModal();
     } catch (err) {
-      // ignore
+      setEditError(err.response?.data?.message || 'Could not update item');
     } finally {
-      setItemActionId(null);
+      setEditSaving(false);
     }
   };
 
@@ -220,7 +327,7 @@ const Admin = () => {
                   <div className="flex gap-2">
                     <button
                       className="btn-secondary text-xs px-3 py-1"
-                      onClick={() => editItem(item)}
+                      onClick={() => openEditModal(item)}
                       disabled={itemActionId === item._id}
                     >
                       Edit
@@ -287,6 +394,196 @@ const Admin = () => {
           </div>
         )}
       </div>
+
+      {editModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={closeEditModal} />
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl p-6 overflow-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-semibold">Edit item</h3>
+                <p className="text-sm text-slate-500">Update the title, location, or description.</p>
+              </div>
+              <button
+                className="text-slate-500 hover:text-primary text-2xl leading-none"
+                onClick={closeEditModal}
+                aria-label="Close"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={submitEditForm} className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-slate-700">Title</label>
+                  <input
+                    name="title"
+                    value={editForm.title}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-700">{t('dashboard.categoryLabel')}</label>
+                  <select
+                    name="category"
+                    value={editForm.category}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">{t('dashboard.selectCategory')}</option>
+                    {categories.map((c) => (
+                      <option key={c.key} value={c.value}>
+                        {t(c.key, c.value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-sm text-slate-700">Condition</label>
+                    <select
+                      name="condition"
+                      value={editForm.condition}
+                      onChange={handleEditChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select condition</option>
+                      {conditions.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-700">District</label>
+                    <select
+                      name="district"
+                      value={editForm.district}
+                      onChange={handleEditChange}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select district</option>
+                      {districtNames.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-700">City</label>
+                    <CitySelect
+                      district={editForm.district}
+                      value={editForm.city}
+                      name="editCity"
+                      required
+                      onChange={handleEditCityChange}
+                      placeholder="e.g., Colombo"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleEditChange}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary h-32"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-700">Images</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleEditImages}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2"
+                  />
+                  <div className="text-xs text-slate-500 mt-1">
+                    Upload new images to replace the current preview (optional).
+                  </div>
+                </div>
+                {editImages.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {editImages.map((img, idx) => (
+                      <div
+                        key={`edit-img-${idx}`}
+                        className="relative border border-slate-200 rounded-lg overflow-hidden h-28"
+                      >
+                        <img src={img} alt={`New preview ${idx + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 left-2 flex items-center gap-1 text-[10px]">
+                          <input
+                            type="radio"
+                            name="editPrimaryImage"
+                            checked={editPrimaryImageIndex === idx}
+                            onChange={() => setEditPrimaryImage(idx)}
+                          />
+                          <span className="bg-white/90 px-2 py-1 rounded">Primary</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 bg-white/80 text-red-600 rounded-full w-6 h-6 text-sm leading-none"
+                          onClick={() => removeEditImage(idx)}
+                          aria-label="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button type="submit" className="btn-primary w-full" disabled={editSaving}>
+                  {editSaving ? 'Saving…' : 'Save changes'}
+                </button>
+                {editError && <div className="text-sm text-red-600">{editError}</div>}
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-200 space-y-3">
+                <div className="text-sm text-slate-700">Current preview</div>
+                <div className="h-48 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                  <img
+                    src={editingItem.imageUrl || '/placeholder.jpg'}
+                    alt={editingItem.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/400x200.png?text=GodakPin.lk';
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 text-sm text-slate-700">
+                  <div className="font-semibold text-slate-900">{editingItem.title}</div>
+                  <div className="text-xs text-slate-500">
+                    {editingItem.category} • {editingItem.condition}
+                  </div>
+                  <div className="text-xs font-semibold text-primary">
+                    {editingItem.city ? `${editingItem.city}, ` : ''}
+                    {editingItem.district}
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed line-clamp-4">
+                  {editingItem.description}
+                </p>
+                {editImages.length > 0 && (
+                  <div className="text-xs text-slate-500">
+                    New image(s) will replace this preview once you save the changes.
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {loading && <div className="text-sm text-slate-500">Loading…</div>}
       {confirmAction && (

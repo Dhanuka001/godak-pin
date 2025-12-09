@@ -377,20 +377,20 @@ const Dashboard = () => {
                   </div>
                   <div>
                   <label className="text-sm text-slate-700">{t('dashboard.categoryLabel')}</label>
-                    <select
-                      name="category"
-                      value={form.category}
-                      onChange={handleItemChange}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    >
-                      <option value="">Select category</option>
-                      {categories.map((c) => (
-                        <option key={c.nameEn} value={c.nameEn}>
-                          {c.nameEn}
-                        </option>
-                      ))}
-                    </select>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleItemChange}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">{t('dashboard.selectCategory')}</option>
+                    {categories.map((c) => (
+                      <option key={c.key} value={c.value}>
+                        {t(c.key, c.value)}
+                      </option>
+                    ))}
+                  </select>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

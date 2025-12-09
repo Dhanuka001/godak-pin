@@ -117,6 +117,12 @@ router.put('/items/:id', async (req, res, next) => {
         item[field] = req.body[field];
       }
     });
+    if (req.body.imageUrl) {
+      item.imageUrl = req.body.imageUrl;
+    }
+    if (Array.isArray(req.body.images)) {
+      item.images = req.body.images;
+    }
     await item.save();
     return res.json(item);
   } catch (err) {
