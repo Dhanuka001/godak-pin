@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - godakpin_net
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env.production
+    depends_on:
+      - mongo
+    ports:
+      - "8400:4000"
+    networks:
+      - godakpin_net
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - godakpin_net
+
+volumes:
+  mongo_data:
+
+networks:
+  godakpin_net:
