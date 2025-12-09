@@ -11,6 +11,8 @@ const Admin = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
+  const [itemActionId, setItemActionId] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -18,12 +20,12 @@ const Admin = () => {
       const [statRes, reportRes, itemRes, paymentRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/reports'),
-        api.get('/items', { params: { limit: 6 } }),
+        api.get('/admin/items'),
         api.get('/admin/payments'),
       ]);
       setStats(statRes.data);
       setReports(reportRes.data);
-      setItems(itemRes.data.slice(0, 6));
+      setItems(itemRes.data);
       setPayments(paymentRes.data);
     } catch (err) {
       setStats(null);
@@ -45,6 +47,56 @@ const Admin = () => {
       // ignore for now
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const setStatus = async (item, status) => {
+    setItemActionId(item._id);
+    try {
+      const res = await api.put(`/admin/items/${item._id}`, { status });
+      setItems((prev) => prev.map((it) => (it._id === item._id ? res.data : it)));
+    } finally {
+      setItemActionId(null);
+    }
+  };
+
+  const openConfirm = (item, type) => {
+    setConfirmAction({ item, type });
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+    const status = confirmAction.type === 'delete' ? 'deleted' : 'available';
+    await setStatus(confirmAction.item, status);
+    setConfirmAction(null);
+  };
+
+  const editItem = async (item) => {
+    const title = window.prompt('New title', item.title);
+    if (title === null) return;
+    const description = window.prompt('New description', item.description || '');
+    if (description === null) return;
+    setItemActionId(item._id);
+    try {
+      const res = await api.put(`/admin/items/${item._id}`, { title, description });
+      setItems((prev) => prev.map((it) => (it._id === item._id ? res.data : it)));
+    } catch (err) {
+      // ignore
+    } finally {
+      setItemActionId(null);
+    }
+  };
+
+  const deleteItem = async (id) => {
+    if (!window.confirm('Delete this item permanently?')) return;
+    setItemActionId(id);
+    try {
+      await api.delete(`/admin/items/${id}`);
+      setItems((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      // ignore
+    } finally {
+      setItemActionId(null);
     }
   };
 
@@ -149,14 +201,53 @@ const Admin = () => {
         )}
       </div>
 
-      <div className="card p-4 space-y-3">
-        <h2 className="text-lg font-semibold">Latest items</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((item) => (
-            <ItemCard key={item._id} item={item} />
-          ))}
+        <div className="card p-4 space-y-3">
+          <h2 className="text-lg font-semibold">Latest items</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item) => (
+              <div key={item._id} className="space-y-2">
+                <ItemCard item={item} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span
+                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      item.status === 'deleted'
+                        ? 'bg-red-50 text-red-700 border border-red-100'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      className="btn-secondary text-xs px-3 py-1"
+                      onClick={() => editItem(item)}
+                      disabled={itemActionId === item._id}
+                    >
+                      Edit
+                    </button>
+                    {item.status === 'deleted' ? (
+                      <button
+                        className="btn-secondary text-xs px-3 py-1"
+                        disabled={itemActionId === item._id}
+                        onClick={() => openConfirm(item, 'reactivate')}
+                      >
+                        Reactivate
+                      </button>
+                    ) : (
+                      <button
+                        className="text-xs text-red-600 hover:text-red-500"
+                        disabled={itemActionId === item._id}
+                        onClick={() => openConfirm(item, 'delete')}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
       <div className="card p-4 space-y-3">
         <h2 className="text-lg font-semibold">Recent payments</h2>
@@ -198,6 +289,41 @@ const Admin = () => {
       </div>
 
       {loading && <div className="text-sm text-slate-500">Loading…</div>}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmAction(null)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              {confirmAction.type === 'delete' ? 'Confirm delete' : 'Reactivate item'}
+            </h3>
+            <p className="text-sm text-slate-600">
+              {confirmAction.type === 'delete'
+                ? 'The item will be hidden from public listings, but you can still reactivate it later.'
+                : 'The item will be visible again to the community.'}
+            </p>
+            <p className="text-sm text-slate-500">
+              <strong>{confirmAction.item.title}</strong> • {confirmAction.item._id}
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                className="text-sm text-slate-500 hover:text-slate-700"
+                onClick={() => setConfirmAction(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary text-sm px-4 py-2"
+                onClick={handleConfirm}
+                disabled={itemActionId === confirmAction.item._id}
+              >
+                {confirmAction.type === 'delete' ? 'Soft delete' : 'Reactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,10 +6,12 @@ import SkeletonItemCard from '../components/SkeletonItemCard';
 import { districtNames } from '../utils/locationData';
 import CitySelect from '../components/CitySelect';
 import { categories } from '../utils/categoryData';
+import { useLocale } from '../context/LocaleContext';
 const conditions = ['Like new', 'Used - good', 'Used - fair'];
 
 const Dashboard = () => {
   const { user, setProfile: setUserProfile } = useAuthContext();
+  const { t } = useLocale();
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -197,49 +199,48 @@ const Dashboard = () => {
       <div className="card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">මගේ ගිණුම</h2>
-            <div className="text-sm text-slate-500">Profile & contact details</div>
+            <h2 className="text-xl font-semibold">{t('dashboard.profileTitle')}</h2>
+            <div className="text-sm text-slate-500">{t('dashboard.profileSubtitle')}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              className="btn-secondary text-sm px-4 py-2"
-              onClick={() => setEditingProfile((v) => !v)}
-            >
-              {editingProfile ? 'Close' : 'Edit profile'}
-            </button>
-            <button
-              type="button"
-              className="text-sm text-red-600 hover:text-red-500"
-              onClick={() => {
-                // logout is only exposed inside account as requested
-                const event = new CustomEvent('gp:logout');
-                window.dispatchEvent(event);
-              }}
-            >
-              Logout
-            </button>
-          </div>
+            <div className="flex items-center gap-3">
+              <button
+                className="btn-secondary text-sm px-4 py-2"
+                onClick={() => setEditingProfile((v) => !v)}
+              >
+                {editingProfile ? t('dashboard.close') : t('dashboard.editProfile')}
+              </button>
+              <button
+                type="button"
+                className="text-sm text-red-600 hover:text-red-500"
+                onClick={() => {
+                  const event = new CustomEvent('gp:logout');
+                  window.dispatchEvent(event);
+                }}
+              >
+                {t('dashboard.logout')}
+              </button>
+            </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="text-sm text-slate-500">Name</div>
-            <div className="text-lg font-semibold text-slate-900">{profile.name}</div>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="text-sm text-slate-500">Mobile</div>
-            <div className="text-lg font-semibold text-slate-900">{profile.mobile}</div>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="text-sm text-slate-500">ස්ථානය</div>
-            <div className="text-lg font-semibold text-slate-900">
-              {profile.district} {profile.city ? `• ${profile.city}` : ''}
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-sm text-slate-500">{t('dashboard.nameLabel')}</div>
+              <div className="text-lg font-semibold text-slate-900">{profile.name}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-sm text-slate-500">{t('dashboard.mobileLabel')}</div>
+              <div className="text-lg font-semibold text-slate-900">{profile.mobile}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <div className="text-sm text-slate-500">{t('dashboard.locationLabel')}</div>
+              <div className="text-lg font-semibold text-slate-900">
+                {profile.district} {profile.city ? `• ${profile.city}` : ''}
+              </div>
             </div>
           </div>
-        </div>
         {profile.contactNote && (
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="text-sm text-slate-500">Contact note</div>
+            <div className="text-sm text-slate-500">{t('dashboard.contactNoteLabel')}</div>
             <div className="text-sm text-slate-700">{profile.contactNote}</div>
           </div>
         )}
@@ -248,7 +249,7 @@ const Dashboard = () => {
           <form onSubmit={submitProfile} className="grid md:grid-cols-2 gap-4 pt-4">
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-slate-700">Name</label>
+              <label className="text-sm text-slate-700">{t('dashboard.nameLabel')}</label>
                 <input
                   name="name"
                   value={profileForm.name}
@@ -258,7 +259,7 @@ const Dashboard = () => {
                 />
               </div>
               <div>
-                <label className="text-sm text-slate-700">Mobile</label>
+              <label className="text-sm text-slate-700">{t('dashboard.mobileLabel')}</label>
                 <input
                   name="mobile"
                   value={profileForm.mobile}
@@ -268,7 +269,7 @@ const Dashboard = () => {
                 />
               </div>
               <div>
-                <label className="text-sm text-slate-700">District</label>
+              <label className="text-sm text-slate-700">{t('dashboard.districtLabel')}</label>
                 <select
                   name="district"
                   value={profileForm.district}
@@ -287,7 +288,7 @@ const Dashboard = () => {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-slate-700">City</label>
+              <label className="text-sm text-slate-700">{t('dashboard.cityLabel')}</label>
                 <CitySelect
                   district={profileForm.district}
                   value={profileForm.city}
@@ -297,7 +298,7 @@ const Dashboard = () => {
                 />
               </div>
               <div>
-                <label className="text-sm text-slate-700">Contact note</label>
+              <label className="text-sm text-slate-700">{t('dashboard.contactNoteLabel')}</label>
                 <textarea
                   name="contactNote"
                   value={profileForm.contactNote}
@@ -306,7 +307,7 @@ const Dashboard = () => {
                 />
               </div>
               <button type="submit" className="btn-primary w-full" disabled={profileSaving}>
-                {profileSaving ? 'Saving...' : 'Update profile'}
+                {profileSaving ? t('dashboard.savingProfile') : t('dashboard.updateProfile')}
               </button>
             </div>
           </form>
@@ -316,11 +317,11 @@ const Dashboard = () => {
       <div className="card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">මගේ භාණ්ඩ</h2>
-            <div className="text-sm text-slate-500">Items you posted</div>
+            <h2 className="text-xl font-semibold">{t('dashboard.itemsTitle')}</h2>
+            <div className="text-sm text-slate-500">{t('dashboard.itemsSubtitle')}</div>
           </div>
           <button className="btn-secondary text-sm px-4 py-2" onClick={() => setShowItemForm((v) => !v)}>
-            {showItemForm ? 'Close form' : 'නව භාණ්ඩයක් දාන්න'}
+            {showItemForm ? t('dashboard.closeForm') : t('dashboard.addItemAction')}
           </button>
         </div>
 
@@ -331,9 +332,9 @@ const Dashboard = () => {
             ))}
           </div>
         ) : myItems.length === 0 ? (
-          <div className="card p-6 text-center text-slate-600 space-y-2">
-            <div>ඔබගේ පළමු භාණ්ඩය දැන් දාන්න.</div>
-            <div className="text-sm text-slate-500">No items yet</div>
+          <div className=" p-6 text-center text-slate-600 space-y-2">
+            <div>{t('dashboard.firstItemHint')}</div>
+            <div className="text-sm text-slate-500">{t('dashboard.noItems')}</div>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -350,8 +351,8 @@ const Dashboard = () => {
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl p-6 overflow-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-semibold">නව භාණ්ඩයක් දාන්න</h3>
-                <p className="text-sm text-slate-500">Fill details and set a primary image</p>
+                <h3 className="text-xl font-semibold">{t('dashboard.addItemModalTitle')}</h3>
+                <p className="text-sm text-slate-500">{t('dashboard.addItemModalSubtitle')}</p>
               </div>
               <button
                 className="text-slate-500 hover:text-primary text-lg"
@@ -365,7 +366,7 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-sm text-slate-700">Title</label>
+                    <label className="text-sm text-slate-700">{t('dashboard.titleLabel')}</label>
                     <input
                       name="title"
                       value={form.title}
@@ -375,7 +376,7 @@ const Dashboard = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-slate-700">Category</label>
+                  <label className="text-sm text-slate-700">{t('dashboard.categoryLabel')}</label>
                     <select
                       name="category"
                       value={form.category}
@@ -393,8 +394,8 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-sm text-slate-700">Condition</label>
+                <div>
+                  <label className="text-sm text-slate-700">{t('dashboard.conditionLabel')}</label>
                     <select
                       name="condition"
                       value={form.condition}
@@ -411,7 +412,7 @@ const Dashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-700">District</label>
+                    <label className="text-sm text-slate-700">{t('dashboard.districtLabel')}</label>
                     <select
                       name="district"
                       value={form.district}
@@ -419,7 +420,7 @@ const Dashboard = () => {
                       className="w-full rounded-lg border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
                       required
                     >
-                      <option value="">Select district</option>
+                      <option value="">{t('dashboard.selectDistrict')}</option>
                       {districtNames.map((d) => (
                         <option key={d} value={d}>
                           {d}
@@ -428,19 +429,19 @@ const Dashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-700">City</label>
+                    <label className="text-sm text-slate-700">{t('dashboard.cityLabel')}</label>
                     <CitySelect
                       district={form.district}
                       value={form.city}
                       name="itemCity"
                       required
                       onChange={(city) => setForm((prev) => ({ ...prev, city }))}
-                      placeholder="Select or search your city"
+                      placeholder={t('dashboard.cityPlaceholder')}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-slate-700">Description</label>
+                  <label className="text-sm text-slate-700">{t('dashboard.descriptionLabel')}</label>
                   <textarea
                     name="description"
                     value={form.description}
@@ -450,7 +451,7 @@ const Dashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-700">Images (multiple)</label>
+                  <label className="text-sm text-slate-700">{t('dashboard.imagesLabel')}</label>
                   <input
                     type="file"
                     accept="image/*"
@@ -458,35 +459,32 @@ const Dashboard = () => {
                     onChange={handleImages}
                     className="w-full rounded-lg border border-slate-200 px-4 py-2"
                   />
-                  <div className="text-xs text-slate-500 mt-1">Select multiple files; choose primary image below.</div>
+                  <div className="text-xs text-slate-500 mt-1">{t('dashboard.imagesHelper')}</div>
                 </div>
                 <button type="submit" className="btn-primary w-full" disabled={saving}>
-                  <span className="btn-label">
-                    <span className="si">නව භාණ්ඩයක් දාන්න</span>
-                    <span className="en">{saving ? 'Saving...' : 'Add item'}</span>
-                  </span>
+                  {saving ? t('dashboard.saving') : t('dashboard.addItemButton')}
                 </button>
                 {message && <div className="text-sm text-primary">{message}</div>}
               </div>
               <div className="bg-slate-50 rounded-xl p-4 border border-dashed border-slate-200 space-y-3">
-                <div className="text-sm text-slate-700">Preview & primary image</div>
+                <div className="text-sm text-slate-700">{t('dashboard.previewLabel')}</div>
                 {form.images.length === 0 ? (
                   <div className="h-48 rounded-lg bg-slate-200 flex items-center justify-center text-slate-500">
-                    No images selected
+                    {t('dashboard.noImages')}
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {form.images.map((img, idx) => (
                       <div key={idx} className="relative border border-slate-200 rounded-lg overflow-hidden">
                         <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-32 object-cover" />
-                        <div className="absolute top-2 left-2 flex items-center gap-1">
-                          <input
-                            type="radio"
-                            name="primaryImage"
-                            checked={form.primaryImageIndex === idx}
-                            onChange={() => setPrimaryImage(idx)}
-                          />
-                          <span className="text-xs bg-white/80 px-2 py-1 rounded">Primary</span>
+                          <div className="absolute top-2 left-2 flex items-center gap-1">
+                            <input
+                              type="radio"
+                              name="primaryImage"
+                              checked={form.primaryImageIndex === idx}
+                              onChange={() => setPrimaryImage(idx)}
+                            />
+                          <span className="text-xs bg-white/80 px-2 py-1 rounded">{t('dashboard.primaryLabel')}</span>
                         </div>
                         <button
                           type="button"

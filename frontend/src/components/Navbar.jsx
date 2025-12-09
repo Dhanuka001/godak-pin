@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext';
 import { useChatContext } from '../context/ChatContext';
@@ -33,6 +33,15 @@ const Navbar = () => {
     { to: '/about', label: t('nav.about') },
     { to: '/contact', label: t('nav.contact') },
   ];
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+    const handleScroll = () => {
+      setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [isMobileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100 relative">
@@ -145,59 +154,62 @@ const Navbar = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             />
             <div className="md:hidden absolute inset-x-0 top-full bg-white border-y border-slate-200 shadow-lg z-20">
-            <div className="space-y-4 px-4 py-4 text-center">
-              <div className="space-y-3">
-                <div className="text-sm text-slate-600">{user ? `${t('nav.greeting', '', { name: user.name })}` : 'Welcome'}</div>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className="block text-base font-medium text-slate-900 hover:text-primary"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className="block text-base font-medium text-slate-900 hover:text-primary"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t('nav.admin')}
-                  </Link>
-                )}
-              </div>
-              <div className="space-y-2">
-                {user ? (
-                  <Link
-                    to="/dashboard"
-                    className="block rounded-lg border border-slate-200 px-4 py-2 text-center font-medium text-primary"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t('nav.dashboard')}
-                  </Link>
-                ) : (
-                  <>
+              <div className="space-y-4 px-4 py-4 text-center">
+                <div className="space-y-3">
+                  <div className="text-sm text-slate-600">
+                    {user ? `${t('nav.greeting', '', { name: user.name })}` : 'Welcome'}
+                  </div>
+                  {navLinks.map((link) => (
                     <Link
-                      to="/login"
-                      className="block rounded-lg px-4 py-2 text-center font-medium text-slate-700 hover:text-primary"
+                      key={link.to}
+                      to={link.to}
+                      className="block text-base font-medium text-slate-900 hover:text-primary"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {t('nav.login')}
+                      {link.label}
                     </Link>
+                  ))}
+                  {user?.role === 'admin' && (
                     <Link
-                      to="/register"
-                      className="block rounded-lg bg-primary text-white px-4 py-2 text-center font-medium"
+                      to="/admin"
+                      className="block text-base font-medium text-slate-900 hover:text-primary"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {t('nav.signup')}
+                      {t('nav.admin')}
                     </Link>
-                  </>
-                )}
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {user ? (
+                    <Link
+                      to="/dashboard"
+                      className="block rounded-lg border border-slate-200 px-4 py-2 text-center font-medium text-primary"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {t('nav.dashboard')}
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        className="block rounded-lg px-4 py-2 text-center font-medium text-slate-700 hover:text-primary"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {t('nav.login')}
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="block rounded-lg bg-primary text-white px-4 py-2 text-center font-medium"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {t('nav.signup')}
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
     </header>
   );

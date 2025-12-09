@@ -77,6 +77,18 @@ router.get('/payments', async (req, res, next) => {
   }
 });
 
+router.get('/items', async (req, res, next) => {
+  try {
+    const items = await Item.find()
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate('owner', 'name email');
+    return res.json(items);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.put('/reports/:id/status', async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -88,6 +100,38 @@ router.put('/reports/:id/status', async (req, res, next) => {
     report.status = status;
     await report.save();
     return res.json({ status: report.status });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.put('/items/:id', async (req, res, next) => {
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    const updatable = ['title', 'description', 'category', 'district', 'city', 'condition', 'status'];
+    updatable.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        item[field] = req.body[field];
+      }
+    });
+    await item.save();
+    return res.json(item);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.delete('/items/:id', async (req, res, next) => {
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    await item.remove();
+    return res.json({ message: 'Item deleted' });
   } catch (err) {
     return next(err);
   }
