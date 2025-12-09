@@ -1,0 +1,7 @@
+# Caddy configuration will be added here later
+
+http://localhost {
+    root * /app/frontend
+    encode gzip
+    file_server
+}
